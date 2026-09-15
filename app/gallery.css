@@ -1,0 +1,13 @@
+.aircraft-gallery { margin-top: 46px; }
+.aircraft-gallery-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 8px; letter-spacing: .18em; color: #777; }
+.aircraft-gallery-toolbar div { display: flex; gap: 6px; }
+.aircraft-gallery-toolbar button { width: 44px; height: 44px; border: 1px solid #333; background: transparent; color: #f5f5f3; cursor: pointer; }
+.aircraft-gallery-track { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(58vw, 820px); gap: 18px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: inline mandatory; scrollbar-width: none; padding-bottom: 10px; }
+.aircraft-gallery-track::-webkit-scrollbar { display: none; }
+.aircraft-gallery-track .cinematic-media { scroll-snap-align: start; }
+.aircraft-gallery-track .cinematic-media-frame { aspect-ratio: 16 / 10; }
+@media (max-width: 720px) {
+  .aircraft-gallery-toolbar div { display: none; }
+  .aircraft-gallery-track { display: grid; grid-auto-flow: row; grid-auto-columns: auto; overflow: visible; scroll-snap-type: none; gap: 28px; }
+  .aircraft-gallery-track .cinematic-media:nth-child(even) { margin-left: 14%; }
+}
