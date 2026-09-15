@@ -75,7 +75,7 @@ export function CinematicMedia({ asset, className = '', label, eyebrow, eager = 
   }
 
   if (!asset) return null;
-  const mediaStyle = { objectPosition, objectFit: 'contain' as const, transform: 'none', filter: 'none' };
+  const mediaStyle = { objectPosition, objectFit: 'cover' as const, transform: 'none', filter: 'none' };
 
   return (
     <figure className={`cinematic-media ${asset.kind === 'video' ? 'cinematic-film' : 'cinematic-still'} ${className}`.trim()}>
@@ -84,12 +84,13 @@ export function CinematicMedia({ asset, className = '', label, eyebrow, eager = 
           <video
             ref={videoRef}
             src={film?.src || asset.src}
+            autoPlay={!controls}
             muted={!controls}
             loop={!controls}
             playsInline
             controls={controls}
             poster={poster || film?.poster}
-            preload={eager ? 'metadata' : 'none'}
+            preload={eager ? 'auto' : 'metadata'}
             aria-label={videoLabel}
             style={mediaStyle}
             onLoadedMetadata={(event) => setAspect(event.currentTarget.videoWidth / event.currentTarget.videoHeight)}
