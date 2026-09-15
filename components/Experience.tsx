@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ExperienceCanvas } from './three/ExperienceCanvas';
@@ -46,7 +46,8 @@ const hotspots = [
 
 export function Experience() {
   const root = useRef<HTMLDivElement>(null);
-  const [entered, setEntered] = useState(false);
+  const [introStarted, setIntroStarted] = useState(false);
+  const [introComplete, setIntroComplete] = useState(false);
   const [activeChapter, setActiveChapter] = useState('hero');
   const [exploreMode, setExploreMode] = useState(false);
   const [activeHotspot, setActiveHotspot] = useState<(typeof hotspots)[number]>(hotspots[0]);
@@ -84,14 +85,14 @@ export function Experience() {
   }, []);
 
   useEffect(() => {
-    document.documentElement.dataset.experienceEntered = entered ? 'true' : 'false';
-    document.body.style.overflow = exploreMode ? 'hidden' : '';
+    document.documentElement.dataset.experienceEntered = introComplete ? 'true' : 'false';
+    document.body.style.overflow = exploreMode || !introComplete ? 'hidden' : '';
 
     return () => {
       delete document.documentElement.dataset.experienceEntered;
       document.body.style.overflow = '';
     };
-  }, [entered, exploreMode]);
+  }, [exploreMode, introComplete]);
 
   useEffect(() => {
     if (!exploreMode) return;
@@ -102,13 +103,20 @@ export function Experience() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [exploreMode]);
 
+  const handleIntroComplete = useCallback(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    setIntroComplete(true);
+    window.requestAnimationFrame(() => ScrollTrigger.refresh());
+  }, []);
+
   const active = chapters.find((chapter) => chapter.id === activeChapter) ?? chapters[0];
+  const introPlaying = introStarted && !introComplete;
 
   return (
     <main className="experience" ref={root}>
-      <Preloader onEnter={() => setEntered(true)} />
+      <Preloader onReady={() => setIntroStarted(true)} />
 
-      <nav className={`nav${entered ? ' visible' : ''}${exploreMode ? ' muted' : ''}`} aria-label="Primary">
+      <nav className={`nav${introComplete ? ' visible' : ''}${exploreMode ? ' muted' : ''}`} aria-label="Primary">
         <a className="brand" href="#hero">SCK AVIATION</a>
         <div className="nav-links">
           <a href="#aircraft">Aircraft</a>
@@ -117,15 +125,32 @@ export function Experience() {
         </div>
       </nav>
 
-      <div className={`chapter-rail${entered ? ' visible' : ''}${exploreMode ? ' muted' : ''}`} aria-hidden="true">
+      <div className={`chapter-rail${introComplete ? ' visible' : ''}${exploreMode ? ' muted' : ''}`} aria-hidden="true">
         <span>{active.index}</span>
         <span className="chapter-rail-line" />
         <span>{active.label}</span>
       </div>
 
-      <ExperienceCanvas entered={entered} exploreMode={exploreMode} />
+      <div className={`intro-hud${introPlaying ? ' visible' : ''}`} aria-hidden={!introPlaying}>
+        <div className="intro-hud-top">
+          <span>OE-LSC / BLACK STAR</span>
+          <span>FINAL APPROACH / VIENNA</span>
+        </div>
+        <div className="intro-hud-crosshair"><span /></div>
+        <div className="intro-hud-bottom">
+          <span>ATTITUDE INBOUND</span>
+          <span className="intro-hud-line" />
+          <span>RUNWAY 01</span>
+        </div>
+      </div>
 
-      <div className={`scroll-layer${exploreMode ? ' frozen' : ''}`}>
+      <ExperienceCanvas
+        introStarted={introStarted}
+        exploreMode={exploreMode}
+        onIntroComplete={handleIntroComplete}
+      />
+
+      <div className={`scroll-layer${!introComplete ? ' waiting' : ''}${exploreMode ? ' frozen' : ''}`}>
         <section className="chapter chapter-hero" id="hero" data-camera="hero">
           <div className="chapter-inner" data-reveal>
             <p className="eyebrow">SCK Aviation / Vienna</p>
