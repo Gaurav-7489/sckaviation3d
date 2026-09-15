@@ -78,7 +78,9 @@ function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps 
     };
   }, [invalidate]);
 
-  useEffect(() => { invalidate(); }, [exploreMode, invalidate, size.width, size.height]);
+  useEffect(() => {
+    invalidate();
+  }, [exploreMode, invalidate, size.width, size.height]);
 
   useEffect(() => {
     if (!exploreMode || handledKey.current === keyboardStep.sequence) return;
@@ -109,12 +111,11 @@ function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps 
 
   return (
     <>
-      {/* Editorial Luxury Studio Lighting: Rich shadows, high specular rims */}
-      <hemisphereLight args={['#20262e', '#030405', 1.8]} />
-      <directionalLight position={[-8, 12, 8]} intensity={4.5} color="#ffffff" />
-      <directionalLight position={[7, 5, -8]} intensity={3.5} color="#e5c898" />
-      <directionalLight position={[-10, 2, -6]} intensity={2.0} color="#7ba6c0" />
-      <directionalLight position={[0, -6, 4]} intensity={0.9} color="#1b2126" />
+      <hemisphereLight args={['#1b2027', '#020304', 1.65]} />
+      <directionalLight position={[-8, 12, 8]} intensity={4.6} color="#ffffff" />
+      <directionalLight position={[7, 5, -8]} intensity={3.2} color="#d9dde2" />
+      <directionalLight position={[-10, 2, -6]} intensity={1.8} color="#7f94a8" />
+      <directionalLight position={[0, -6, 4]} intensity={0.8} color="#171b20" />
       <AircraftModel />
       <OrbitControls
         enabled={exploreMode}
@@ -145,8 +146,13 @@ export function ExperienceCanvas({ exploreMode, onReady }: ExperienceCanvasProps
   const [ready, setReady] = useState(false);
   const [keyboardStep, setKeyboardStep] = useState<KeyboardStep>({ horizontal: 0, vertical: 0, sequence: 0 });
   const canvasElement = useRef<HTMLCanvasElement | null>(null);
-  const notifyReady = useCallback(() => { setReady(true); onReady?.(); }, [onReady]);
-  const fail = useCallback(() => { setFailed(true); }, []);
+  const notifyReady = useCallback(() => {
+    setReady(true);
+    onReady?.();
+  }, [onReady]);
+  const fail = useCallback(() => {
+    setFailed(true);
+  }, []);
 
   useEffect(() => {
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -195,7 +201,7 @@ export function ExperienceCanvas({ exploreMode, onReady }: ExperienceCanvasProps
             onCreated={({ gl }) => {
               gl.setClearColor(0x000000, 0);
               gl.toneMapping = THREE.ACESFilmicToneMapping;
-              gl.toneMappingExposure = 1.25;
+              gl.toneMappingExposure = 1.18;
               canvasElement.current = gl.domElement;
               gl.domElement.addEventListener('webglcontextlost', fail);
             }}
