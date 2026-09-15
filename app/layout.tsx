@@ -5,6 +5,7 @@ import './intro-media.css';
 import './pdr.css';
 import './gallery.css';
 import './intro-continuity.css';
+import './intro-skip.css';
 import './a11y.css';
 
 export const metadata: Metadata = {
