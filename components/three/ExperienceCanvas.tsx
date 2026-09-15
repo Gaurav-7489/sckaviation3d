@@ -12,6 +12,11 @@ export type ExperienceCanvasProps = {
   onReady?: () => void;
 };
 
+type SceneRigProps = ExperienceCanvasProps & {
+  keyboardStep: KeyboardStep;
+  reducedMotion: boolean;
+};
+
 const lookAt = new THREE.Vector3(0.15, 0.35, 0);
 const modelBounds = new THREE.Box3(new THREE.Vector3(-5.95, -1.48, -6.1), new THREE.Vector3(6.15, 2.08, 6.1));
 const corners = Array.from({ length: 8 }, (_, index) => new THREE.Vector3(
@@ -25,7 +30,7 @@ const directions = [
   new THREE.Vector3(1.25, 0.77, 1.35).normalize(),
 ];
 const worldUp = new THREE.Vector3(0, 1, 0);
-const CAMERA_SCROLL_DAMPING = 2.2;
+const CAMERA_SCROLL_DAMPING = 4.2;
 const CAMERA_SETTLE_EPSILON = 0.00035;
 
 function fittedDistance(direction: THREE.Vector3, camera: THREE.PerspectiveCamera) {
@@ -39,12 +44,12 @@ function fittedDistance(direction: THREE.Vector3, camera: THREE.PerspectiveCamer
       depth + Math.abs(corner.dot(right)) / tanHorizontal,
       depth + Math.abs(corner.dot(up)) / tanVertical,
     ];
-  })) * 1.12;
+  })) * 1.1;
 }
 
 type KeyboardStep = { horizontal: number; vertical: number; sequence: number };
 
-function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps & { keyboardStep: KeyboardStep }) {
+function SceneRig({ exploreMode, onReady, keyboardStep, reducedMotion }: SceneRigProps) {
   const { camera: rawCamera, invalidate, size } = useThree();
   const camera = rawCamera as THREE.PerspectiveCamera;
   const targetProgress = useRef(0);
@@ -63,7 +68,7 @@ function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps 
       const stickyTop = window.innerWidth <= 720 ? 64 : 72;
       const travel = Math.max(1, bounds.height - window.innerHeight + stickyTop);
       targetProgress.current = THREE.MathUtils.clamp((stickyTop - bounds.top) / travel, 0, 1);
-      if (bounds.top < window.innerHeight && bounds.bottom > 0) invalidate();
+      if (!reducedMotion && bounds.top < window.innerHeight && bounds.bottom > 0) invalidate();
     };
     const schedule = () => {
       if (!frame) frame = window.requestAnimationFrame(update);
@@ -79,11 +84,11 @@ function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps 
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
     };
-  }, [invalidate]);
+  }, [invalidate, reducedMotion]);
 
   useEffect(() => {
     invalidate();
-  }, [exploreMode, invalidate, size.width, size.height]);
+  }, [exploreMode, invalidate, reducedMotion, size.width, size.height]);
 
   useEffect(() => {
     if (!exploreMode || handledKey.current === keyboardStep.sequence) return;
@@ -98,6 +103,9 @@ function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps 
   useFrame((_, delta) => {
     if (exploreMode) {
       direction.current.copy(camera.position).sub(lookAt).normalize();
+      smoothedProgress.current = targetProgress.current;
+    } else if (reducedMotion) {
+      direction.current.copy(directions[1]);
       smoothedProgress.current = targetProgress.current;
     } else {
       const safeDelta = Math.max(1 / 120, Math.min(delta, 1 / 30));
@@ -128,11 +136,11 @@ function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps 
 
   return (
     <>
-      <hemisphereLight args={['#1b2027', '#020304', 1.65]} />
-      <directionalLight position={[-8, 12, 8]} intensity={4.6} color="#ffffff" />
-      <directionalLight position={[7, 5, -8]} intensity={3.2} color="#d9dde2" />
-      <directionalLight position={[-10, 2, -6]} intensity={1.8} color="#7f94a8" />
-      <directionalLight position={[0, -6, 4]} intensity={0.8} color="#171b20" />
+      <hemisphereLight args={['#2b333d', '#030405', 2.1]} />
+      <directionalLight position={[-8, 12, 8]} intensity={5.2} color="#ffffff" />
+      <directionalLight position={[7, 5, -8]} intensity={3.9} color="#e6e8eb" />
+      <directionalLight position={[-10, 2, -6]} intensity={2.4} color="#8fa8bd" />
+      <directionalLight position={[0, -6, 4]} intensity={1.05} color="#252b31" />
       <AircraftModel />
       <OrbitControls
         enabled={exploreMode}
@@ -140,7 +148,7 @@ function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps 
         enablePan={false}
         enableDamping={true}
         dampingFactor={0.06}
-        rotateSpeed={0.5}
+        rotateSpeed={0.58}
         minPolarAngle={Math.PI * 0.20}
         maxPolarAngle={Math.PI * 0.52}
         target={lookAt}
@@ -158,9 +166,9 @@ class SceneErrorBoundary extends Component<{ children: ReactNode; onFailure: () 
 }
 
 export function ExperienceCanvas({ exploreMode, onReady }: ExperienceCanvasProps) {
-  const [canRender, setCanRender] = useState(false);
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const [keyboardStep, setKeyboardStep] = useState<KeyboardStep>({ horizontal: 0, vertical: 0, sequence: 0 });
   const canvasElement = useRef<HTMLCanvasElement | null>(null);
   const notifyReady = useCallback(() => {
@@ -173,9 +181,7 @@ export function ExperienceCanvas({ exploreMode, onReady }: ExperienceCanvasProps
 
   useEffect(() => {
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const updatePreference = () => {
-      setCanRender(!motion.matches);
-    };
+    const updatePreference = () => setReducedMotion(motion.matches);
     updatePreference();
     motion.addEventListener('change', updatePreference);
     return () => motion.removeEventListener('change', updatePreference);
@@ -185,7 +191,7 @@ export function ExperienceCanvas({ exploreMode, onReady }: ExperienceCanvasProps
     canvasElement.current?.removeEventListener('webglcontextlost', fail);
   }, [fail]);
 
-  const showScene = canRender && !failed;
+  const showScene = !failed;
   return (
     <div
       className={styles.shell}
@@ -211,19 +217,24 @@ export function ExperienceCanvas({ exploreMode, onReady }: ExperienceCanvasProps
           <Canvas
             className={`${styles.canvas} ${exploreMode ? styles.exploring : ''}`}
             frameloop="demand"
-            camera={{ fov: 30, near: 0.1, far: 150, position: [-18, 9, 22] }}
+            camera={{ fov: 31, near: 0.1, far: 150, position: [-18, 9, 22] }}
             dpr={[1, 1.5]}
             gl={{ antialias: true, alpha: true, powerPreference: 'high-performance', stencil: false }}
             fallback={<div className={styles.fallback}><img src="/plane_img.webp" alt="Black Star jet" /></div>}
             onCreated={({ gl }) => {
               gl.setClearColor(0x000000, 0);
               gl.toneMapping = THREE.ACESFilmicToneMapping;
-              gl.toneMappingExposure = 1.18;
+              gl.toneMappingExposure = 1.32;
               canvasElement.current = gl.domElement;
               gl.domElement.addEventListener('webglcontextlost', fail);
             }}
           >
-            <SceneRig exploreMode={exploreMode} onReady={notifyReady} keyboardStep={keyboardStep} />
+            <SceneRig
+              exploreMode={exploreMode}
+              onReady={notifyReady}
+              keyboardStep={keyboardStep}
+              reducedMotion={reducedMotion}
+            />
           </Canvas>
         </SceneErrorBoundary>
       )}
