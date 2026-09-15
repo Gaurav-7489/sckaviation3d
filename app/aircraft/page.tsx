@@ -39,24 +39,14 @@ export default function AircraftPage() {
         </PageSection>
 
         <PageSection index="02 / THE DETAILS" title="Every detail belongs.">
-          <p>Soft grey seating, dark surfaces and natural stone work as one composition. The contrast is deliberate, but never loud.</p>
+          <p>Soft grey seating, dark surfaces and the natural veins of Portoro marble bring the cabin together. Each finish is part of the same idea.</p>
           <div className="aircraft-detail-duo" aria-label="Black Star cabin details">
-            <CinematicMedia asset={asset('inplane_seats.webp')} label="The complete Black Star cabin" eyebrow="THE CABIN" />
             <CinematicMedia asset={asset('colse_view_seat.webp')} label="Tailored cabin seating" eyebrow="TEXTURE" />
+            <CinematicMedia asset={asset('sck-portoro-marble.webp')} label="The natural pattern of Portoro marble" eyebrow="MATERIAL" />
           </div>
-          <p><a className="text-link" href="/design-philosophy">Explore the design language <span aria-hidden="true">→</span></a></p>
         </PageSection>
 
-        <PageSection index="03 / MATERIAL CONTRAST" title="Soft. Then precise.">
-          <p>Fabric and leather soften the space while Portoro marble and metal give it definition. Each material has a role in the whole.</p>
-          <div className="aircraft-detail-duo aircraft-detail-duo-alt" aria-label="Black Star material details">
-            <CinematicMedia asset={asset('sck-galley.webp')} label="Portoro marble and metal in the galley" eyebrow="THE GALLEY" />
-            <CinematicMedia asset={asset('sck-portoro-marble.webp')} label="The natural pattern of Portoro marble" eyebrow="PORTORO" />
-          </div>
-          <p><a className="text-link" href="/atelier">Enter the atelier <span aria-hidden="true">→</span></a></p>
-        </PageSection>
-
-        <PageSection index="04 / RECOGNITION" title="Award-winning design.">
+        <PageSection index="03 / RECOGNITION" title="Award-winning design.">
           <p>Black Star received the Private Jet Design award at the International Yacht &amp; Aviation Awards 2024.</p>
           <div className="aircraft-recognition-layout">
             <div className="aircraft-recognition-media">
@@ -65,7 +55,7 @@ export default function AircraftPage() {
             <div className="aircraft-recognition-proof">
               <span>WINNER / 2024</span>
               <strong>Private Jet Interior &amp; Exterior Design</strong>
-              <p>A recognition of Black Star as a complete design statement — exterior, cabin and material language considered as one.</p>
+              <p>Recognition for Black Star as a complete design statement — exterior, cabin and material language considered as one.</p>
               <a className="text-link" href="https://thedesignawards.co.uk/sck-aviation-gulfstream-g450/" target="_blank" rel="noreferrer">Discover the award <span aria-hidden="true">↗</span></a>
             </div>
           </div>
