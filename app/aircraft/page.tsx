@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { AircraftGallery } from '@/components/media/AircraftGallery';
 import { CinematicMedia } from '@/components/media/CinematicMedia';
 import { EditorialShell, PageSection } from '@/components/ui/EditorialShell';
 import { getPublicMedia } from '@/lib/media';
@@ -27,16 +28,19 @@ export default function AircraftPage() {
         </div>
       </PageSection>
 
-      <PageSection index="02 / INTERIOR" title="One System, Inside">
-        <p>The cabin is treated as part of the same design language: controlled contrast, disciplined alignment and a material-first hierarchy.</p>
-        <div className="page-media-pair">
-          <CinematicMedia asset={asset('inplane_seats.webp')} label="Cabin composition" eyebrow="INTERIOR / WIDE" />
-          <CinematicMedia asset={asset('one_seat_view.webp')} label="Single seat view" eyebrow="INTERIOR / DETAIL" />
-        </div>
+      <PageSection index="02 / GALLERY" title="One Object, Many Distances">
+        <p>Desktop uses horizontal snap with keyboard controls; mobile becomes a vertical editorial sequence so no information depends on hover or a tiny swipe target.</p>
+        <AircraftGallery assets={[
+          { asset: asset('plane_img.webp'), label: 'OE-LSC / exterior' },
+          { asset: asset('inplane_seats.webp'), label: 'Cabin composition' },
+          { asset: asset('one_seat_view.webp'), label: 'Single seat view' },
+          { asset: asset('colse_view_seat.webp'), label: 'Close seat detail' },
+          { asset: asset('seat_full view.webp'), label: 'Seat form' },
+        ]} />
       </PageSection>
 
       <PageSection index="03 / MATERIAL" title="Detail Is Evidence">
-        <p>Material stories should be inspectable rather than described with generic luxury language. The current media library is arranged as a vertical mobile story and an editorial desktop composition.</p>
+        <p>Material stories should be inspectable rather than described with generic luxury language. The current media library is arranged with intentional crops and caption space for approved sourcing/detail stories.</p>
         <div className="page-media-pair">
           <CinematicMedia asset={asset('colse_view_seat.webp')} label="Close seat detail" eyebrow="DETAIL / TEXTURE" />
           <CinematicMedia asset={asset('seat_full view.webp')} label="Seat form" eyebrow="DETAIL / FORM" />
