@@ -4,7 +4,7 @@ import { getPublicMedia } from '@/lib/media';
 
 export const metadata: Metadata = {
   title: 'Attitude With Altitude',
-  description: 'Discover Black Star: distinctive aircraft design, considered interiors, private journeys and special projects from SCK Aviation.',
+  description: 'Enter the SCK Aviation world: a cinematic private aviation experience shaped by presence, precision and a singular point of view.',
 };
 
 export default function Home() {
