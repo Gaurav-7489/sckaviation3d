@@ -112,6 +112,53 @@
     height: 100%;
     object-fit: cover;
   }
+
+  /* Two-photo detail section — asymmetrical, but still the same two assets. */
+  .aircraft-page-tuned .page-media-pair {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(240px, .65fr);
+    gap: 0;
+    align-items: end;
+    margin-top: clamp(42px, 5vw, 72px);
+    padding-bottom: clamp(28px, 4vw, 56px);
+  }
+
+  .aircraft-page-tuned .page-media-pair .cinematic-media:first-child {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    margin: 0;
+  }
+
+  .aircraft-page-tuned .page-media-pair .cinematic-media:first-child .cinematic-media-frame {
+    aspect-ratio: 4 / 3;
+    max-height: none;
+  }
+
+  .aircraft-page-tuned .page-media-pair .cinematic-media:nth-child(2) {
+    position: relative;
+    z-index: 2;
+    width: 118%;
+    justify-self: end;
+    margin: 0 0 -7% -18%;
+    padding: 10px;
+    background: #050507;
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 26px 68px rgba(0,0,0,.5);
+  }
+
+  .aircraft-page-tuned .page-media-pair .cinematic-media:nth-child(2) .cinematic-media-frame {
+    aspect-ratio: 4 / 5;
+    max-height: none;
+  }
+
+  .aircraft-page-tuned .page-media-pair .cinematic-media-frame img,
+  .aircraft-page-tuned .page-media-pair .cinematic-media-frame video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
 
 @media (min-width: 721px) and (max-width: 1100px) {
@@ -138,5 +185,14 @@
 
   .aircraft-page-tuned .aircraft-gallery-track {
     grid-auto-columns: minmax(460px, 84%);
+  }
+
+  .aircraft-page-tuned .page-media-pair {
+    grid-template-columns: minmax(0, 1.2fr) minmax(210px, .8fr);
+  }
+
+  .aircraft-page-tuned .page-media-pair .cinematic-media:nth-child(2) {
+    width: 110%;
+    margin-left: -10%;
   }
 }
