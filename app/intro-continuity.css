@@ -1,0 +1,7 @@
+.cloud-wash { transition: opacity 1.25s cubic-bezier(.22,.61,.36,1), visibility 0s linear 1.25s; }
+.cloud-wash.clouds { visibility: visible; opacity: .9; animation: sck-cloud-drift 4.8s ease-in-out infinite alternate; transition-delay: 0s; }
+.cloud-wash.approach { visibility: visible; opacity: .34; animation: sck-cloud-drift 4.8s ease-in-out infinite alternate; transition-delay: 0s; }
+.cloud-wash.touchdown { visibility: visible; opacity: 0; animation: none; transition-delay: 0s; }
+.cloud-wash.complete { opacity: 0; visibility: hidden; animation: none; }
+@keyframes sck-cloud-drift { from { transform: scale(1.08) translate3d(-1%,0,0); } to { transform: scale(1.15) translate3d(1.5%,-1%,0); } }
+@media (prefers-reduced-motion: reduce) { .cloud-wash.clouds, .cloud-wash.approach { animation: none; } }
