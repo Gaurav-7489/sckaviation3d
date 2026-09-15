@@ -12,22 +12,12 @@
   border-radius: 6px;
 }
 
-.canvas,
-.softwareCanvas {
+.canvas {
   position: absolute !important;
   inset: 0;
-  width: 100%;
-  height: 100%;
   z-index: 2;
   touch-action: pan-y;
   cursor: default;
-}
-
-.softwareCanvas {
-  display: block;
-  background:
-    radial-gradient(circle at 55% 48%, rgba(37, 45, 52, 0.14), transparent 46%),
-    transparent;
 }
 
 .exploring {
