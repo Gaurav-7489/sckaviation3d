@@ -184,7 +184,7 @@
   min-height: 240px;
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.24)),
-    url('/images/SCK-img-award.webp') center / cover no-repeat;
+    url('/SCK-img-award.webp') center / cover no-repeat;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
 }
