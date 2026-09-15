@@ -3,14 +3,18 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, Float, MeshReflectorMaterial, OrbitControls } from '@react-three/drei';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import type { MutableRefObject } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { PlaceholderAircraft } from './PlaceholderAircraft';
 
+type IntroPhase = 'clouds' | 'approach' | 'touchdown';
+
 type ExperienceCanvasProps = {
   introStarted: boolean;
   exploreMode: boolean;
+  onIntroPhase: (phase: IntroPhase) => void;
   onIntroComplete: () => void;
 };
 
@@ -20,11 +24,17 @@ type Shot = {
   rotationY: number;
 };
 
+type CloudState = {
+  opacity: number;
+  drift: number;
+};
+
 const desktopShots: readonly Shot[] = [
   { position: [8.2, 2.2, 10.8], target: [0, 0.1, 0], rotationY: -0.2 },
   { position: [4.6, 0.9, 5.8], target: [0.9, 0.05, 0], rotationY: 0.08 },
   { position: [-7.4, 2.0, 8.7], target: [0, 0, 0], rotationY: 0.34 },
   { position: [2.4, 1.2, 6.1], target: [-0.5, 0, 0], rotationY: -0.48 },
+  { position: [-3.8, 1.65, 7.8], target: [0.35, 0.05, 0], rotationY: 0.2 },
   { position: [10.2, 3.2, 14.5], target: [0, 0, 0], rotationY: -0.08 },
 ];
 
@@ -33,17 +43,18 @@ const mobileShots: readonly Shot[] = [
   { position: [7.0, 1.6, 9.8], target: [0.4, 0, 0], rotationY: 0.02 },
   { position: [-9.2, 2.8, 12.5], target: [0, 0, 0], rotationY: 0.24 },
   { position: [5.5, 2.0, 10.0], target: [-0.4, 0, 0], rotationY: -0.34 },
+  { position: [-6.6, 2.1, 10.8], target: [0.2, 0, 0], rotationY: 0.15 },
   { position: [10.8, 3.8, 16.5], target: [0, 0, 0], rotationY: -0.06 },
 ];
 
 function Runway() {
-  const centerMarkers = useMemo(() => Array.from({ length: 13 }, (_, index) => -24 + index * 4), []);
-  const edgeLights = useMemo(() => Array.from({ length: 17 }, (_, index) => -28 + index * 3.5), []);
+  const centerMarkers = useMemo(() => Array.from({ length: 17 }, (_, index) => -32 + index * 4), []);
+  const edgeLights = useMemo(() => Array.from({ length: 21 }, (_, index) => -35 + index * 3.5), []);
 
   return (
     <group>
-      <mesh position={[0, -1.28, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[18, 64]} />
+      <mesh position={[0, -1.28, -3]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[18, 78]} />
         <MeshReflectorMaterial
           blur={[420, 140]}
           resolution={512}
@@ -73,7 +84,7 @@ function Runway() {
         </mesh>
       )))}
 
-      {[-7.5, -3.2].map((z) => (
+      {[-9.5, -5.2].map((z) => (
         <group key={`touchdown-${z}`}>
           {[-2.7, -2.0, 2.0, 2.7].map((x) => (
             <mesh key={`${z}-${x}`} position={[x, -1.264, z]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -87,15 +98,99 @@ function Runway() {
   );
 }
 
-function SceneRig({ introStarted, exploreMode, onIntroComplete }: ExperienceCanvasProps) {
+function createCloudTexture() {
+  const size = 96;
+  const data = new Uint8Array(size * size * 4);
+
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const nx = (x / (size - 1)) * 2 - 1;
+      const ny = (y / (size - 1)) * 2 - 1;
+      const radius = Math.sqrt(nx * nx + ny * ny);
+      const edge = THREE.MathUtils.clamp(1 - radius, 0, 1);
+      const wave = Math.sin(x * 0.34 + y * 0.17) * 0.08 + Math.sin(x * 0.11 - y * 0.23) * 0.07;
+      const alpha = THREE.MathUtils.clamp(Math.pow(edge, 1.35) + wave * edge, 0, 1);
+      const offset = (y * size + x) * 4;
+      data[offset] = 255;
+      data[offset + 1] = 255;
+      data[offset + 2] = 255;
+      data[offset + 3] = Math.round(alpha * 255);
+    }
+  }
+
+  const texture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+  texture.needsUpdate = true;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+function CloudField({ state }: { state: MutableRefObject<CloudState> }) {
   const group = useRef<THREE.Group>(null);
-  const cameraTarget = useRef(new THREE.Vector3(0, 2, -10));
+  const texture = useMemo(() => createCloudTexture(), []);
+  const material = useMemo(() => new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    opacity: 1,
+    depthWrite: false,
+    color: new THREE.Color('#ffffff'),
+  }), [texture]);
+
+  const sprites = useMemo(() => {
+    let seed = 7183;
+    const random = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
+    return Array.from({ length: 52 }, () => {
+      const scale = 3.2 + random() * 6.2;
+      return {
+        x: -10 + random() * 20,
+        y: -4.5 + random() * 10.5,
+        z: -19 + random() * 27,
+        sx: scale,
+        sy: scale * (0.55 + random() * 0.3),
+      };
+    });
+  }, []);
+
+  useFrame((_, delta) => {
+    material.opacity = state.current.opacity;
+    if (!group.current) return;
+    group.current.position.z = state.current.drift;
+    group.current.rotation.z += delta * 0.0015;
+  });
+
+  useEffect(() => () => {
+    material.dispose();
+    texture.dispose();
+  }, [material, texture]);
+
+  return (
+    <group ref={group}>
+      {sprites.map((sprite, index) => (
+        <sprite
+          key={index}
+          material={material}
+          position={[sprite.x, sprite.y, sprite.z]}
+          scale={[sprite.sx, sprite.sy, 1]}
+        />
+      ))}
+    </group>
+  );
+}
+
+function SceneRig({ introStarted, exploreMode, onIntroPhase, onIntroComplete }: ExperienceCanvasProps) {
+  const aircraftGroup = useRef<THREE.Group>(null);
+  const cameraTarget = useRef(new THREE.Vector3(0, 1.4, -8));
   const scrollProgress = useRef(0);
   const pointer = useRef(new THREE.Vector2(0, 0));
+  const cloudState = useRef<CloudState>({ opacity: 1, drift: -2.5 });
   const introFinished = useRef(false);
   const completionSent = useRef(false);
   const [landed, setLanded] = useState(false);
-  const { camera, size } = useThree();
+  const [runwayVisible, setRunwayVisible] = useState(false);
+  const { camera, size, scene } = useThree();
 
   const shots = useMemo(() => (size.width <= 720 ? mobileShots : desktopShots), [size.width]);
 
@@ -126,23 +221,38 @@ function SceneRig({ introStarted, exploreMode, onIntroComplete }: ExperienceCanv
   }, []);
 
   useEffect(() => {
-    if (!group.current || introStarted) return;
+    if (!aircraftGroup.current || introStarted) return;
 
     introFinished.current = false;
     completionSent.current = false;
     setLanded(false);
-    group.current.position.set(-1.8, 5.35, -22);
-    group.current.rotation.set(-0.055, -0.06, -0.018);
-    group.current.scale.setScalar(0.84);
-    camera.position.set(4.5, 4.35, 15.5);
-    cameraTarget.current.set(0, 2.1, -10);
-  }, [camera, introStarted]);
+    setRunwayVisible(false);
+    cloudState.current.opacity = 1;
+    cloudState.current.drift = -2.5;
+
+    aircraftGroup.current.position.set(-0.2, 1.6, -16);
+    aircraftGroup.current.rotation.set(-0.025, -0.02, -0.012);
+    aircraftGroup.current.scale.setScalar(0.58);
+    camera.position.set(0, 1.75, 9.4);
+    cameraTarget.current.set(0, 1.35, -8);
+
+    if (scene.background instanceof THREE.Color) scene.background.set('#f4f7f8');
+    if (scene.fog instanceof THREE.Fog) {
+      scene.fog.color.set('#f4f7f8');
+      scene.fog.near = 7;
+      scene.fog.far = 34;
+    }
+  }, [camera, introStarted, scene]);
 
   useEffect(() => {
-    if (!introStarted || !group.current || completionSent.current) return;
+    if (!introStarted || !aircraftGroup.current || completionSent.current) return;
 
-    const aircraft = group.current;
+    const aircraft = aircraftGroup.current;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const background = scene.background instanceof THREE.Color ? scene.background : new THREE.Color('#f4f7f8');
+    scene.background = background;
+    const fog = scene.fog instanceof THREE.Fog ? scene.fog : null;
+    const heroShot = shots[0];
 
     const finish = () => {
       if (completionSent.current) return;
@@ -153,90 +263,187 @@ function SceneRig({ introStarted, exploreMode, onIntroComplete }: ExperienceCanv
     };
 
     if (reducedMotion) {
+      cloudState.current.opacity = 0;
+      setRunwayVisible(true);
+      background.set('#050507');
+      if (fog) {
+        fog.color.set('#050507');
+        fog.near = 12;
+        fog.far = 34;
+      }
       aircraft.position.set(0, 0, 0);
-      aircraft.rotation.set(0, desktopShots[0].rotationY, 0);
+      aircraft.rotation.set(0, heroShot.rotationY, 0);
       aircraft.scale.setScalar(1);
-      camera.position.set(...desktopShots[0].position);
-      cameraTarget.current.set(...desktopShots[0].target);
+      camera.position.set(...heroShot.position);
+      cameraTarget.current.set(...heroShot.target);
       const id = window.setTimeout(finish, 120);
       return () => window.clearTimeout(id);
     }
 
+    onIntroPhase('clouds');
+
     const tl = gsap.timeline({ onComplete: finish });
 
-    tl.addLabel('inbound')
+    tl.addLabel('cloud-flight', 0)
+      .to(aircraft.position, {
+        x: 0.08,
+        y: 1.05,
+        z: -5.2,
+        duration: 2.85,
+        ease: 'power2.inOut',
+      }, 'cloud-flight')
+      .to(aircraft.rotation, {
+        x: -0.015,
+        y: -0.035,
+        z: 0,
+        duration: 2.85,
+        ease: 'power2.inOut',
+      }, 'cloud-flight')
+      .to(aircraft.scale, {
+        x: 0.88,
+        y: 0.88,
+        z: 0.88,
+        duration: 2.85,
+        ease: 'power2.out',
+      }, 'cloud-flight')
+      .to(camera.position, {
+        x: 0.9,
+        y: 2.15,
+        z: 10.8,
+        duration: 2.85,
+        ease: 'power2.inOut',
+      }, 'cloud-flight')
+      .to(cameraTarget.current, {
+        x: 0,
+        y: 1.1,
+        z: -4.4,
+        duration: 2.85,
+        ease: 'power2.inOut',
+      }, 'cloud-flight')
+      .to(cloudState.current, {
+        drift: 7.5,
+        duration: 3.05,
+        ease: 'none',
+      }, 'cloud-flight')
+      .to(cloudState.current, {
+        opacity: 0.2,
+        duration: 1.45,
+        ease: 'power2.out',
+      }, 1.4)
+      .to(background, {
+        r: 0.82,
+        g: 0.86,
+        b: 0.9,
+        duration: 1.2,
+        ease: 'power1.inOut',
+      }, 1.55)
+      .call(() => {
+        onIntroPhase('approach');
+        setRunwayVisible(true);
+        aircraft.position.set(-1.8, 5.3, -22);
+        aircraft.rotation.set(-0.055, -0.06, -0.018);
+        aircraft.scale.setScalar(0.84);
+        camera.position.set(4.5, 4.35, 15.5);
+        cameraTarget.current.set(0, 2.1, -10);
+      }, undefined, 2.85)
+      .to(cloudState.current, {
+        opacity: 0,
+        duration: 0.9,
+        ease: 'power2.out',
+      }, 2.85)
+      .to(background, {
+        r: 0.0196,
+        g: 0.0196,
+        b: 0.0275,
+        duration: 1.2,
+        ease: 'power2.inOut',
+      }, 2.85);
+
+    if (fog) {
+      tl.to(fog.color, {
+        r: 0.0196,
+        g: 0.0196,
+        b: 0.0275,
+        duration: 1.2,
+        ease: 'power2.inOut',
+      }, 2.85)
+        .to(fog, { near: 12, far: 34, duration: 1.2, ease: 'power2.inOut' }, 2.85);
+    }
+
+    tl.addLabel('approach-one', 3.05)
       .to(aircraft.position, {
         x: -0.9,
-        y: 3.6,
+        y: 3.55,
         z: -10.5,
-        duration: 2.55,
+        duration: 2.25,
         ease: 'power1.inOut',
-      }, 'inbound')
+      }, 'approach-one')
       .to(aircraft.rotation, {
         x: -0.075,
         y: -0.1,
         z: -0.008,
-        duration: 2.55,
+        duration: 2.25,
         ease: 'power1.inOut',
-      }, 'inbound')
+      }, 'approach-one')
       .to(aircraft.scale, {
         x: 0.92,
         y: 0.92,
         z: 0.92,
-        duration: 2.55,
+        duration: 2.25,
         ease: 'power1.inOut',
-      }, 'inbound')
+      }, 'approach-one')
       .to(camera.position, {
         x: 3.7,
         y: 3.55,
         z: 13.2,
-        duration: 2.55,
+        duration: 2.25,
         ease: 'power1.inOut',
-      }, 'inbound')
+      }, 'approach-one')
       .to(cameraTarget.current, {
         x: -0.2,
         y: 1.9,
         z: -6.8,
-        duration: 2.55,
+        duration: 2.25,
         ease: 'power1.inOut',
-      }, 'inbound')
-      .addLabel('approach')
+      }, 'approach-one')
+      .addLabel('approach-two', 5.3)
       .to(aircraft.position, {
         x: -0.18,
         y: 1.12,
         z: -2.7,
-        duration: 2.2,
+        duration: 1.95,
         ease: 'power2.in',
-      }, 'approach')
+      }, 'approach-two')
       .to(aircraft.rotation, {
         x: -0.035,
         y: -0.145,
         z: 0,
-        duration: 2.2,
+        duration: 1.95,
         ease: 'power2.inOut',
-      }, 'approach')
+      }, 'approach-two')
       .to(aircraft.scale, {
         x: 0.98,
         y: 0.98,
         z: 0.98,
-        duration: 2.2,
+        duration: 1.95,
         ease: 'power2.out',
-      }, 'approach')
+      }, 'approach-two')
       .to(camera.position, {
         x: 5.6,
         y: 2.65,
         z: 11.9,
-        duration: 2.2,
+        duration: 1.95,
         ease: 'power2.inOut',
-      }, 'approach')
+      }, 'approach-two')
       .to(cameraTarget.current, {
         x: 0,
         y: 0.75,
         z: -2.1,
-        duration: 2.2,
+        duration: 1.95,
         ease: 'power2.inOut',
-      }, 'approach')
-      .addLabel('touchdown')
+      }, 'approach-two')
+      .call(() => onIntroPhase('touchdown'), undefined, 7.25)
+      .addLabel('touchdown', 7.25)
       .to(aircraft.position, {
         x: 0,
         y: 0.06,
@@ -258,7 +465,7 @@ function SceneRig({ introStarted, exploreMode, onIntroComplete }: ExperienceCanv
         duration: 1.05,
         ease: 'power3.out',
       }, 'touchdown')
-      .addLabel('rollout')
+      .addLabel('rollout', 8.3)
       .to(aircraft.position, {
         x: 0,
         y: 0,
@@ -268,7 +475,7 @@ function SceneRig({ introStarted, exploreMode, onIntroComplete }: ExperienceCanv
       }, 'rollout')
       .to(aircraft.rotation, {
         x: 0,
-        y: desktopShots[0].rotationY,
+        y: heroShot.rotationY,
         z: 0,
         duration: 1.55,
         ease: 'power2.out',
@@ -281,22 +488,22 @@ function SceneRig({ introStarted, exploreMode, onIntroComplete }: ExperienceCanv
         ease: 'power2.out',
       }, 'rollout')
       .to(camera.position, {
-        x: desktopShots[0].position[0],
-        y: desktopShots[0].position[1],
-        z: desktopShots[0].position[2],
+        x: heroShot.position[0],
+        y: heroShot.position[1],
+        z: heroShot.position[2],
         duration: 1.55,
         ease: 'power2.inOut',
       }, 'rollout')
       .to(cameraTarget.current, {
-        x: desktopShots[0].target[0],
-        y: desktopShots[0].target[1],
-        z: desktopShots[0].target[2],
+        x: heroShot.target[0],
+        y: heroShot.target[1],
+        z: heroShot.target[2],
         duration: 1.55,
         ease: 'power2.inOut',
       }, 'rollout');
 
     return () => tl.kill();
-  }, [camera, introStarted, onIntroComplete]);
+  }, [camera, introStarted, onIntroComplete, onIntroPhase, scene, shots]);
 
   useFrame((_, delta) => {
     if (!introFinished.current) {
@@ -344,9 +551,9 @@ function SceneRig({ introStarted, exploreMode, onIntroComplete }: ExperienceCanv
       delta,
     );
 
-    if (group.current) {
+    if (aircraftGroup.current) {
       const rotation = THREE.MathUtils.lerp(from.rotationY, to.rotationY, t);
-      group.current.rotation.y = THREE.MathUtils.damp(group.current.rotation.y, rotation, 4.2, delta);
+      aircraftGroup.current.rotation.y = THREE.MathUtils.damp(aircraftGroup.current.rotation.y, rotation, 4.2, delta);
     }
 
     camera.lookAt(cameraTarget.current);
@@ -354,7 +561,13 @@ function SceneRig({ introStarted, exploreMode, onIntroComplete }: ExperienceCanv
 
   return (
     <>
-      <group ref={group}>
+      <CloudField state={cloudState} />
+
+      <group visible={runwayVisible}>
+        <Runway />
+      </group>
+
+      <group ref={aircraftGroup}>
         <Float
           speed={landed ? 0.42 : 0}
           rotationIntensity={landed ? 0.014 : 0}
@@ -383,27 +596,30 @@ function SceneRig({ introStarted, exploreMode, onIntroComplete }: ExperienceCanv
   );
 }
 
-export function ExperienceCanvas({ introStarted, exploreMode, onIntroComplete }: ExperienceCanvasProps) {
+export function ExperienceCanvas({ introStarted, exploreMode, onIntroPhase, onIntroComplete }: ExperienceCanvasProps) {
   return (
     <div className={`canvas-shell${introStarted ? ' entered' : ''}${exploreMode ? ' explore' : ''}`} aria-hidden="true">
       <Canvas
-        camera={{ position: [4.5, 4.35, 15.5], fov: 35 }}
+        camera={{ position: [0, 1.75, 9.4], fov: 35 }}
         dpr={[1, 1.65]}
         gl={{ antialias: true, powerPreference: 'high-performance', alpha: false }}
       >
-        <color attach="background" args={['#050507']} />
-        <fog attach="fog" args={['#050507', 10, 42]} />
-        <ambientLight intensity={0.11} />
+        <color attach="background" args={['#f4f7f8']} />
+        <fog attach="fog" args={['#f4f7f8', 7, 34]} />
+        <ambientLight intensity={0.14} />
         <directionalLight position={[6, 9, 5]} intensity={3.2} />
         <directionalLight position={[-9, 3, -6]} intensity={1.15} />
-        <spotLight position={[1, 8, -1]} intensity={2.3} angle={0.35} penumbra={0.72} distance={28} />
+        <spotLight position={[1, 8, -1]} intensity={2.3} angle={0.35} penumbra={0.72} distance={24} />
         <pointLight position={[0, -0.8, 5]} intensity={0.72} distance={16} />
-        <pointLight position={[0, 3.5, -13]} intensity={0.62} distance={22} color="#cfd8df" />
 
         <Suspense fallback={null}>
-          <SceneRig introStarted={introStarted} exploreMode={exploreMode} onIntroComplete={onIntroComplete} />
-          <Runway />
-          <Environment preset="warehouse" environmentIntensity={0.24} />
+          <SceneRig
+            introStarted={introStarted}
+            exploreMode={exploreMode}
+            onIntroPhase={onIntroPhase}
+            onIntroComplete={onIntroComplete}
+          />
+          <Environment preset="warehouse" environmentIntensity={0.28} />
         </Suspense>
       </Canvas>
       <div className="canvas-vignette" />
