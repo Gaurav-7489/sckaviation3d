@@ -1,16 +1,48 @@
-/* Give the homepage aircraft enough scroll distance to inspect each angle cleanly. */
+/* Homepage 3D aircraft: slightly slower than normal, without dragging the page out. */
 .sck-home .flight-story {
-  height: 560svh;
+  height: 410svh;
+}
+
+.sck-home .flight-copy {
+  width: min(370px, 29vw);
+}
+
+.sck-home .flight-stage::before {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.86) 0%,
+    rgba(0, 0, 0, 0.54) 24%,
+    rgba(0, 0, 0, 0.16) 38%,
+    rgba(0, 0, 0, 0.04) 54%,
+    rgba(0, 0, 0, 0.06) 100%
+  );
 }
 
 @media (min-width: 769px) and (max-width: 1100px) {
   .sck-home .flight-story {
-    height: 500svh;
+    height: 380svh;
+  }
+
+  .sck-home .flight-copy {
+    width: min(340px, 36vw);
   }
 }
 
 @media (max-width: 768px) {
   .sck-home .flight-story {
-    height: 430svh;
+    height: 340svh;
+  }
+
+  .sck-home .flight-copy {
+    top: 58%;
+    width: auto;
+  }
+
+  .sck-home .flight-chapter h2 {
+    font-size: clamp(32px, 7.5vw, 44px);
+  }
+
+  .sck-home .flight-description {
+    max-width: 92%;
   }
 }
