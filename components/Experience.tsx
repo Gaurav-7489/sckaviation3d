@@ -18,23 +18,23 @@ const flightChapters = [
   {
     label: 'AERODYNAMIC PROFILE',
     code: '01 / 03',
-    title: <>Precision in<br />Matte Black.</>,
-    body: 'A customized Gulfstream G450 with singular aesthetic poise. Stealth presence outside. Meticulously curated sanctuary inside.',
-    detail: 'OE-LSC · GULFSTREAM G450 · RANGE 4,350 NM',
+    title: <>Quiet power.<br />Discreet by design.</>,
+    body: 'SCK Aviation shapes aircraft around presence, precision and a more personal way of travelling. Black Star is a statement without noise.',
+    detail: 'OE-LSC · GULFSTREAM G450 · BESPOKE DELIVERY',
   },
   {
-    label: 'ARCHITECTURAL LINES',
+    label: 'MATERIAL LANGUAGE',
     code: '02 / 03',
-    title: <>Every Angle.<br />Uncompromising.</>,
-    body: 'Deep obsidian absorption meets brushed metallic accents. An aggressive silhouette designed to command attention on every apron.',
-    detail: 'A BESPOKE PERSPECTIVE · BESPOKE INTERIORS',
+    title: <>Every surface<br />has a point of view.</>,
+    body: 'Matte black, natural marble, deep leather and sculpted metal come together in a cabin that feels refined, calm and unmistakably private.',
+    detail: 'PORTORO · NUBUCK · BRUSHED METAL',
   },
   {
-    label: 'INSPECTION STAGE',
+    label: 'PRIVATE WORLD',
     code: '03 / 03',
-    title: <>Command The<br />Perspective.</>,
-    body: 'Rotate the aircraft in 3D space to examine wing camber, turbine nacelles, and the signature dark finish, then explore the cabin.',
-    detail: 'INTERACTIVE 3D · EXPLORE BLACK STAR',
+    title: <>A different idea<br />of aviation.</>,
+    body: 'From charter to film, commissions and private journeys, SCK builds experiences that feel tailored, cinematic and quietly extraordinary.',
+    detail: 'VIENNA · GENEVA · DUBAI · SELECTIVE ACCESS',
   },
 ];
 
@@ -97,31 +97,30 @@ export function Experience({ media }: { media: MediaAsset[] }) {
     <main className="sck-home dark-luxury-root" id="main-content">
       <SiteNav />
 
-      {/* Hero: High-Impact Monochromatic Visual */}
       <section className="welcome-scene" aria-labelledby="welcome-title">
         <div className="welcome-topline">
-          <span className="gold-accent-text">SCK AVIATION ATELIER</span>
+          <span className="gold-accent-text">SCK AVIATION</span>
           <span>VIENNA · GENEVA · DUBAI</span>
         </div>
 
         <div className="welcome-body">
           <div className="welcome-copy">
-            <p className="welcome-kicker">PRIVATE AVIATION REDEFINED</p>
+            <p className="welcome-kicker">PRIVATE AVIATION REIMAGINED</p>
             <h1 id="welcome-title">
               Attitude<br />
               With<br />
               <em>Altitude.</em>
             </h1>
             <p className="welcome-lead">
-              Black Star is a bespoke Gulfstream G450 engineered for those who demand discretion, radical design, and seamless travel.
+              Black is not the absence of expression. It is the frame for silence, precision, and a more personal way of moving through the world.
             </p>
             <div className="hero-cta-group">
               <a className="welcome-enter" href="#flight-story" onClick={() => setLoadAircraft(true)}>
-                <span>Explore 3D Aircraft</span>
+                <span>Explore the vision</span>
                 <span className="arrow-icon" aria-hidden="true">↘</span>
               </a>
               <Link className="welcome-secondary-link" href="/access">
-                Charter Enquiries <span>↗</span>
+                Enquire <span>↗</span>
               </Link>
             </div>
           </div>
@@ -138,26 +137,25 @@ export function Experience({ media }: { media: MediaAsset[] }) {
             <div className="welcome-mist" aria-hidden="true" />
             <div className="welcome-specs-pill">
               <span className="dot-live" />
-              <span>OE-LSC · MACH 0.88 · FL450</span>
+              <span>OE-LSC · PRIVATE JET REDEFINED</span>
             </div>
           </div>
         </div>
 
         <div className="welcome-bottom">
-          <span className="specs-tag">GULFSTREAM G450 CUSTOM ATELIER</span>
+          <span className="specs-tag">BESPOKE AIRCRAFT · TAILORED TRAVEL</span>
           <a href="#flight-story" className="scroll-hint">
             <span>Scroll to inspect</span>
             <span aria-hidden="true">↓</span>
           </a>
-          <span>01 — THE 3D STAGE</span>
+          <span>01 — THE VISION</span>
         </div>
       </section>
 
-      {/* 3D Aircraft Storytelling Stage */}
       <section className="flight-story" id="flight-story" ref={flight} aria-label="3D Interactive Aircraft Showcase">
         <div className={`flight-stage${exploreMode ? ' is-exploring' : ''}`}>
           <div className="flight-heading">
-            <span className="brand-tracker">BLACK STAR / 3D SHOWCASE</span>
+            <span className="brand-tracker">BLACK STAR / 3D STORY</span>
             <span className="counter-pill">{flightChapters[chapter].code}</span>
           </div>
 
@@ -193,14 +191,14 @@ export function Experience({ media }: { media: MediaAsset[] }) {
                     </button>
                   ) : (
                     <Link className="sck-text-link gold" href="/aircraft">
-                      Aircraft Specifications <span>↗</span>
+                      Aircraft details <span>↗</span>
                     </Link>
                   )}
                 </div>
 
                 {exploreMode && index === 2 ? (
                   <p className="flight-help">
-                    Drag around to rotate. Use keyboard arrows to tilt &amp; pan. Press ESC to return.
+                    Drag to rotate. Use arrow keys to tilt. Press ESC to return.
                   </p>
                 ) : null}
               </div>
@@ -222,156 +220,90 @@ export function Experience({ media }: { media: MediaAsset[] }) {
                 </button>
               ))}
             </nav>
-            <a href="#aircraft" className="next-section-link">
-              <span>Step inside cabin</span> <span aria-hidden="true">↓</span>
+            <a href="#vision" className="next-section-link">
+              <span>Enter the world</span> <span aria-hidden="true">↓</span>
             </a>
           </div>
         </div>
       </section>
 
-      {/* The Cabin: Full-Screen Visual Architecture */}
-      <section className="home-section cabin-section" id="aircraft">
+      <section className="home-section" id="vision">
         <div className="section-heading">
-          <p className="section-kicker">01 / THE CABIN</p>
+          <p className="section-kicker">01 / SCK VISION</p>
           <h2>
-            Quiet Sanctuary.<br />
-            <span>Sculpted in Darkness.</span>
+            A quieter kind<br />
+            <span>of luxury.</span>
           </h2>
           <div>
             <p>
-              Hand-stitched Italian leather, acoustic dampening composites, and custom-milled Portoro marble fixtures. A low-glare cabin tailored for rest, conversation, and undisturbed concentration.
+              We design aircraft and journeys that feel deeply personal: precise, restrained, tactile and unmistakably custom. The result is movement with intention, and presence without excess.
             </p>
-            <Link className="sck-text-link gold" href="/aircraft">
-              Explore cabin specifications <span>↗</span>
+            <Link className="sck-text-link gold" href="/about">
+              About SCK Aviation <span>↗</span>
             </Link>
           </div>
         </div>
 
-        <div className="cabin-pair">
-          <CinematicMedia asset={asset('inplane_seats.webp')} label="Handcrafted Club Configuration" eyebrow="CAPACITY FOR 14 PASSENGERS" />
-          <CinematicMedia asset={asset('one_seat_view.webp')} label="Individual Executive Suite" eyebrow="FULL-FLAT BERTHING READY" />
+        <div className="project-quick-grid">
+          <Link href="/aircraft" className="project-card">
+            <span className="project-number">01</span>
+            <div className="project-info">
+              <h3>Black Star</h3>
+              <p>A custom Gulfstream G450 shaped around a sharper, darker point of view.</p>
+            </div>
+            <span className="project-arrow">↗</span>
+          </Link>
+
+          <Link href="/design-philosophy" className="project-card">
+            <span className="project-number">02</span>
+            <div className="project-info">
+              <h3>Material language</h3>
+              <p>Texture, tone and tactility create the atmosphere of the entire cabin experience.</p>
+            </div>
+            <span className="project-arrow">↗</span>
+          </Link>
+
+          <Link href="/projects" className="project-card">
+            <span className="project-number">03</span>
+            <div className="project-info">
+              <h3>Private access</h3>
+              <p>Selective charter, film work and collaborations built around trust and intent.</p>
+            </div>
+            <span className="project-arrow">↗</span>
+          </Link>
         </div>
       </section>
 
-      {/* Materials & Details: Triptych Grid */}
-      <section className="home-section material-section" id="materials">
+      <section className="home-section material-section" id="craft">
         <div className="section-heading">
-          <p className="section-kicker">02 / TACTILE PRECISION</p>
+          <p className="section-kicker">02 / CRAFT</p>
           <h2>
-            Nothing<br />
-            <span>By Accident.</span>
+            Engineered for<br />
+            <span>stillness and impact.</span>
           </h2>
           <div>
             <p>
-              Rare black Portoro gold-veined marble, brushed gunmetal hardware, and breathable perforated nubuck. Every sensory touchpoint has been deliberately rethought.
+              The visual identity is deliberate: matte surfaces, soft contrast, guided light and restraint. Nothing is overplayed, because the aircraft speaks for itself.
             </p>
-            <Link className="sck-text-link gold" href="/design-philosophy">
-              Read design philosophy <span>↗</span>
+            <Link className="sck-text-link gold" href="/atelier">
+              Inside the atelier <span>↗</span>
             </Link>
           </div>
         </div>
 
         <div className="material-triptych">
-          <CinematicMedia asset={asset('colse_view_seat.webp')} label="Perforated Nubuck & Contrast Stitching" eyebrow="01 / TACTILITY" />
-          <CinematicMedia asset={asset('seat_full view.webp')} label="Anatomic Ergonomic Shell" eyebrow="02 / GEOMETRY" />
-          <CinematicMedia asset={asset('sck-galley.webp') || asset('inplane_seats.webp')} label="Portoro Marble & Black Obsidian Bar" eyebrow="03 / MONOLITH" />
+          <CinematicMedia asset={asset('inplane_seats.webp')} label="Quiet luxury in motion" eyebrow="01 / CABIN" />
+          <CinematicMedia asset={asset('sck-galley.webp') || asset('inplane_seats.webp')} label="The material story" eyebrow="02 / DETAILS" />
+          <CinematicMedia asset={asset('SCK-img-award.webp')} label="Award-winning character" eyebrow="03 / PROOF" />
         </div>
       </section>
 
-      {/* Atelier Film: Cinematic Full-Bleed Feature */}
-      <section className="home-section film-section" id="atelier">
-        <div className="section-heading">
-          <p className="section-kicker">03 / BESPOKE MANUFACTURE</p>
-          <h2>
-            From Raw Sketch<br />
-            <span>To The Stratosphere.</span>
-          </h2>
-          <div>
-            <p>
-              Over 24 months of specialized aeronautical engineering, custom FAA/EASA certifications, and bespoke coachbuilding to create the world&apos;s most distinctive private jet.
-            </p>
-            <Link className="sck-text-link gold" href="/atelier">
-              Inside the Atelier <span>↗</span>
-            </Link>
-          </div>
-        </div>
-
-        <div className="cinema-container">
-          <CinematicMedia
-            asset={asset('vid-mi-opt-v1.mp4')}
-            label="The Making of Black Star"
-            eyebrow="ORIGINAL FEATURE FILM"
-            poster="/images/atelier-poster.webp"
-            controls
-          />
-        </div>
-      </section>
-
-      {/* Charter & Productions */}
-      <section className="home-section film-section" id="projects">
-        <div className="section-heading">
-          <p className="section-kicker">04 / OPERATIONS &amp; ACCESS</p>
-          <h2>
-            Beyond The<br />
-            <span>Ordinary Charter.</span>
-          </h2>
-          <div>
-            <p>
-              Available on a strictly selective basis for long-range transcontinental travel, high-profile cinematic shoots, and exclusive brand partnerships.
-            </p>
-            <Link className="sck-text-link gold" href="/projects">
-              View Special Projects <span>↗</span>
-            </Link>
-          </div>
-        </div>
-
-        <div className="cinema-container">
-          <CinematicMedia
-            asset={asset('vid-charter-feature-v1.mp4')}
-            label="Black Star on Apron & In Flight"
-            eyebrow="SELECTIVE CHARTER ACCESS"
-            poster="/images/charter-poster.webp"
-            controls
-          />
-        </div>
-
-        <div className="project-quick-grid">
-          <Link href="/access?interest=Selective%20Charter" className="project-card">
-            <span className="project-number">01</span>
-            <div className="project-info">
-              <h3>Private Journeys</h3>
-              <p>Non-stop intercontinental capability with bespoke catering.</p>
-            </div>
-            <span className="project-arrow">↗</span>
-          </Link>
-
-          <Link href="/access?interest=Production" className="project-card">
-            <span className="project-number">02</span>
-            <div className="project-info">
-              <h3>Film &amp; Commercials</h3>
-              <p>An unmistakable visual icon on tarmac or in hangar stages.</p>
-            </div>
-            <span className="project-arrow">↗</span>
-          </Link>
-
-          <Link href="/access?interest=Collaboration" className="project-card">
-            <span className="project-number">03</span>
-            <div className="project-info">
-              <h3>Custom Commissions</h3>
-              <p>Aviation interior consultations and special livery commissions.</p>
-            </div>
-            <span className="project-arrow">↗</span>
-          </Link>
-        </div>
-      </section>
-
-      {/* Global Recognition */}
       <section className="home-section recognition-section" id="recognition">
         <div className="recognition-content">
-          <p className="section-kicker">05 / ACCOLADES</p>
+          <p className="section-kicker">03 / RECOGNITION</p>
           <h2>
-            Distinctive Vision.<br />
-            <span>Globally Celebrated.</span>
+            Distinctive vision.<br />
+            <span>Globally celebrated.</span>
           </h2>
           <div className="award-badge-card">
             <p className="award-title">Winner — Private Jet Interior &amp; Exterior Design</p>
@@ -382,7 +314,7 @@ export function Experience({ media }: { media: MediaAsset[] }) {
               target="_blank"
               rel="noreferrer"
             >
-              Read Design Awards Citation <span>↗</span>
+              Read the citation <span>↗</span>
             </a>
           </div>
         </div>
@@ -391,25 +323,47 @@ export function Experience({ media }: { media: MediaAsset[] }) {
         </div>
       </section>
 
-      {/* Enquiry Section */}
       <section className="home-section home-enquiry" id="access">
         <div className="enquiry-introduction">
-          <p className="section-kicker">06 / PRIVATE INQUIRY</p>
+          <p className="section-kicker">04 / PRIVATE INQUIRY</p>
           <h2>
-            Initiate Your<br />
-            <span>Journey.</span>
+            Begin a<br />
+            <span>private conversation.</span>
           </h2>
           <p className="enquiry-text">
-            For selective charter requests, project collaborations, or confidential aircraft management consultations, reach our Vienna operations desk directly.
+            For selective charter, long-range travel, private commissions or film collaborations, we respond with discretion and intent.
           </p>
           <div className="enquiry-image-wrap">
-            <img src="/images/black-star-alps.webp" alt="Black Star soaring" loading="lazy" width="1536" height="1097" />
+            <img src="/images/black-star-alps.webp" alt="Black Star private jet" loading="lazy" width="1536" height="1097" />
           </div>
         </div>
         <div className="enquiry-form-container">
           <AccessForm />
         </div>
       </section>
+
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '0 24px 40px' }}>
+        <a
+          href="#main-content"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '12px 22px',
+            border: '1px solid rgba(197, 160, 105, 0.35)',
+            background: 'rgba(197, 160, 105, 0.06)',
+            color: '#c5a069',
+            textDecoration: 'none',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            fontSize: '11px',
+            borderRadius: '999px',
+          }}
+        >
+          <span aria-hidden="true">↑</span>
+          <span>Back to top</span>
+        </a>
+      </div>
 
       <SiteFooter />
     </main>
