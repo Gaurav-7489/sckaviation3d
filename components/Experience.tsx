@@ -1,9 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import type { MediaAsset } from '@/lib/media';
+import { ContextMedia, MediaArchive } from './media/ResponsiveMedia';
 import { ExperienceCanvas } from './three/ExperienceCanvas';
 import { Preloader } from './ui/Preloader';
 
@@ -12,8 +14,11 @@ const chapters = [
   { id: 'material', index: '01', label: 'MATERIAL' },
   { id: 'aircraft', index: '02', label: 'BLACK STAR' },
   { id: 'atelier', index: '03', label: 'ATELIER' },
-  { id: 'access', index: '04', label: 'ACCESS' },
+  { id: 'archive', index: '04', label: 'ARCHIVE' },
+  { id: 'access', index: '05', label: 'ACCESS' },
 ] as const;
+
+type IntroPhase = 'loading' | 'clouds' | 'approach' | 'touchdown' | 'complete';
 
 const hotspots = [
   {
@@ -45,14 +50,25 @@ const hotspots = [
   },
 ] as const;
 
-export function Experience() {
+const introCopy: Record<IntroPhase, { title: string; meta: string }> = {
+  loading: { title: 'ALIGNING DETAILS', meta: 'PREPARING BLACK STAR' },
+  clouds: { title: 'BREAKING CLOUD', meta: 'OE-LSC / BLACK STAR INBOUND' },
+  approach: { title: 'FINAL APPROACH', meta: 'VIENNA / RUNWAY 01' },
+  touchdown: { title: 'TOUCHDOWN', meta: 'ATTITUDE HAS ARRIVED' },
+  complete: { title: 'BLACK STAR', meta: 'SCK AVIATION / VIENNA' },
+};
+
+export function Experience({ media }: { media: MediaAsset[] }) {
   const root = useRef<HTMLDivElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
   const [introStarted, setIntroStarted] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
+  const [introPhase, setIntroPhase] = useState<IntroPhase>('loading');
   const [activeChapter, setActiveChapter] = useState('hero');
   const [exploreMode, setExploreMode] = useState(false);
   const [activeHotspot, setActiveHotspot] = useState<(typeof hotspots)[number]>(hotspots[0]);
+
+  const priorityMedia = useMemo(() => media.filter((asset) => asset.priority), [media]);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -148,8 +164,18 @@ export function Experience() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [exploreMode]);
 
+  const handleIntroReady = useCallback(() => {
+    setIntroPhase('clouds');
+    setIntroStarted(true);
+  }, []);
+
+  const handleIntroPhase = useCallback((phase: Exclude<IntroPhase, 'loading' | 'complete'>) => {
+    setIntroPhase(phase);
+  }, []);
+
   const handleIntroComplete = useCallback(() => {
     lenisRef.current?.scrollTo(0, { immediate: true, force: true });
+    setIntroPhase('complete');
     setIntroComplete(true);
     window.requestAnimationFrame(() => {
       lenisRef.current?.resize();
@@ -159,16 +185,20 @@ export function Experience() {
 
   const active = chapters.find((chapter) => chapter.id === activeChapter) ?? chapters[0];
   const introPlaying = introStarted && !introComplete;
+  const phaseCopy = introCopy[introPhase];
 
   return (
     <main className="experience" ref={root}>
-      <Preloader onReady={() => setIntroStarted(true)} />
+      <Preloader onReady={handleIntroReady} assets={priorityMedia} />
+
+      <div className={`cloud-wash ${introPlaying ? introPhase : 'complete'}`} aria-hidden="true" />
 
       <nav className={`nav${introComplete ? ' visible' : ''}${exploreMode ? ' muted' : ''}`} aria-label="Primary">
         <a className="brand" href="#hero">SCK AVIATION</a>
         <div className="nav-links">
           <a href="#aircraft">Aircraft</a>
           <a href="#atelier">Atelier</a>
+          <a href="#archive">Archive</a>
           <a href="#access">Access</a>
         </div>
       </nav>
@@ -182,11 +212,15 @@ export function Experience() {
       <div className={`intro-hud${introPlaying ? ' visible' : ''}`} aria-hidden={!introPlaying}>
         <div className="intro-hud-top">
           <span>OE-LSC / BLACK STAR</span>
-          <span>FINAL APPROACH / VIENNA</span>
+          <span>{introPhase === 'clouds' ? 'CLOUD LAYER / BREAK' : 'FINAL APPROACH / VIENNA'}</span>
         </div>
         <div className="intro-hud-crosshair"><span /></div>
+        <div className="intro-hud-status">
+          <strong>{phaseCopy.title}</strong>
+          <span>{phaseCopy.meta}</span>
+        </div>
         <div className="intro-hud-bottom">
-          <span>ATTITUDE INBOUND</span>
+          <span>{introPhase === 'clouds' ? 'ALTITUDE / DESCENDING' : 'ATTITUDE INBOUND'}</span>
           <span className="intro-hud-line" />
           <span>RUNWAY 01</span>
         </div>
@@ -195,6 +229,7 @@ export function Experience() {
       <ExperienceCanvas
         introStarted={introStarted}
         exploreMode={exploreMode}
+        onIntroPhase={handleIntroPhase}
         onIntroComplete={handleIntroComplete}
       />
 
@@ -214,6 +249,7 @@ export function Experience() {
             <p className="eyebrow">01 / Material</p>
             <h2>Black Is<br />A Material.</h2>
             <p className="copy">Matte, gloss and reflection are treated as separate surfaces. Light reveals the aircraft instead of decorating it.</p>
+            <ContextMedia assets={media} categories={['material']} limit={2} />
           </div>
         </section>
 
@@ -225,6 +261,7 @@ export function Experience() {
             <button className="ghost-button" type="button" onClick={() => setExploreMode(true)}>
               Explore Aircraft <span>↗</span>
             </button>
+            <ContextMedia assets={media} categories={['aircraft', 'runway', 'hero']} limit={2} />
           </div>
         </section>
 
@@ -233,12 +270,26 @@ export function Experience() {
             <p className="eyebrow">03 / Atelier</p>
             <h2>Impossible<br />Made Physical.</h2>
             <p className="copy">The polished object gives way to process: transformation, fabrication, material decisions and proof of execution.</p>
+            <ContextMedia assets={media} categories={['atelier', 'project']} limit={2} />
+          </div>
+        </section>
+
+        <section className="chapter chapter-media" id="archive" data-camera="archive">
+          <div className="chapter-inner" data-reveal>
+            <div className="media-intro">
+              <div>
+                <p className="eyebrow">04 / Visual Archive</p>
+                <h2>Evidence,<br />In Motion.</h2>
+              </div>
+              <p className="copy">Every still and moving image is read directly from the public media library and presented responsively without forcing desktop crops onto smaller screens.</p>
+            </div>
+            <MediaArchive assets={media} />
           </div>
         </section>
 
         <section className="chapter chapter-access" id="access" data-camera="access">
           <div className="chapter-inner" data-reveal>
-            <p className="eyebrow">04 / Access</p>
+            <p className="eyebrow">05 / Access</p>
             <h2>Experience Our<br />Attitude, Selectively.</h2>
             <a className="cta" href="mailto:hello@sckaviation.com">Request Access <span>↗</span></a>
           </div>

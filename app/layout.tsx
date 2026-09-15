@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import 'lenis/dist/lenis.css';
 import './globals.css';
+import './intro-media.css';
 
 export const metadata: Metadata = {
   title: 'SCK Aviation — 3D Experience',
