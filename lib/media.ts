@@ -18,12 +18,14 @@ const videoExtensions = new Set(['.mp4', '.webm', '.mov', '.m4v']);
 
 function classify(name: string): MediaCategory {
   const value = name.toLowerCase();
+
   if (/(runway|landing|touchdown|apron|tarmac)/.test(value)) return 'runway';
-  if (/(oe[-_ ]?lsc|black[-_ ]?star|aircraft|plane|jet|g450|fuselage|engine|wing)/.test(value)) return 'aircraft';
   if (/(hero|cover|intro|opening|arrival)/.test(value)) return 'hero';
+  if (/(seat|seats|cabin|interior|atelier|process|workshop|fabrication|paint|build|craft|mission|mi[-_ ]?opt)/.test(value)) return 'atelier';
   if (/(material|marble|portoro|nubuck|flannel|chrome|detail|texture)/.test(value)) return 'material';
-  if (/(atelier|process|workshop|fabrication|paint|interior|build|craft)/.test(value)) return 'atelier';
-  if (/(project|production|automotive|fashion|film|shoot|campaign)/.test(value)) return 'project';
+  if (/(award|charter|project|production|automotive|fashion|film|shoot|campaign)/.test(value)) return 'project';
+  if (/(oe[-_ ]?lsc|black[-_ ]?star|aircraft|plane|jet|g450|fuselage|engine|wing)/.test(value)) return 'aircraft';
+
   return 'misc';
 }
 
