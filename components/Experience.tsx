@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ExperienceCanvas } from './three/ExperienceCanvas';
@@ -46,11 +47,43 @@ const hotspots = [
 
 export function Experience() {
   const root = useRef<HTMLDivElement>(null);
+  const lenisRef = useRef<Lenis | null>(null);
   const [introStarted, setIntroStarted] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
   const [activeChapter, setActiveChapter] = useState('hero');
   const [exploreMode, setExploreMode] = useState(false);
   const [activeHotspot, setActiveHotspot] = useState<(typeof hotspots)[number]>(hotspots[0]);
+
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const lenis = new Lenis({
+      lerp: 0.065,
+      smoothWheel: true,
+      wheelMultiplier: 0.82,
+      touchMultiplier: 1,
+      syncTouch: false,
+      anchors: true,
+      autoRaf: false,
+      stopInertiaOnNavigate: true,
+    });
+
+    lenisRef.current = lenis;
+    lenis.stop();
+
+    const onLenisScroll = () => ScrollTrigger.update();
+    const tick = (time: number) => lenis.raf(time * 1000);
+
+    lenis.on('scroll', onLenisScroll);
+    gsap.ticker.add(tick);
+    gsap.ticker.lagSmoothing(0);
+
+    return () => {
+      gsap.ticker.remove(tick);
+      lenis.destroy();
+      lenisRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -85,6 +118,18 @@ export function Experience() {
   }, []);
 
   useEffect(() => {
+    const lenis = lenisRef.current;
+    if (!lenis) return;
+
+    if (!introComplete || exploreMode) {
+      lenis.stop();
+    } else {
+      lenis.start();
+      lenis.resize();
+    }
+  }, [exploreMode, introComplete]);
+
+  useEffect(() => {
     document.documentElement.dataset.experienceEntered = introComplete ? 'true' : 'false';
     document.body.style.overflow = exploreMode || !introComplete ? 'hidden' : '';
 
@@ -104,9 +149,12 @@ export function Experience() {
   }, [exploreMode]);
 
   const handleIntroComplete = useCallback(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    lenisRef.current?.scrollTo(0, { immediate: true, force: true });
     setIntroComplete(true);
-    window.requestAnimationFrame(() => ScrollTrigger.refresh());
+    window.requestAnimationFrame(() => {
+      lenisRef.current?.resize();
+      ScrollTrigger.refresh();
+    });
   }, []);
 
   const active = chapters.find((chapter) => chapter.id === activeChapter) ?? chapters[0];
