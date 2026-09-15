@@ -2,7 +2,7 @@
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, Float, MeshReflectorMaterial, OrbitControls } from '@react-three/drei';
-import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -94,6 +94,7 @@ function SceneRig({ introStarted, exploreMode, onIntroComplete }: ExperienceCanv
   const pointer = useRef(new THREE.Vector2(0, 0));
   const introFinished = useRef(false);
   const completionSent = useRef(false);
+  const [landed, setLanded] = useState(false);
   const { camera, size } = useThree();
 
   const shots = useMemo(() => (size.width <= 720 ? mobileShots : desktopShots), [size.width]);
@@ -129,6 +130,7 @@ function SceneRig({ introStarted, exploreMode, onIntroComplete }: ExperienceCanv
 
     introFinished.current = false;
     completionSent.current = false;
+    setLanded(false);
     group.current.position.set(-1.8, 5.35, -22);
     group.current.rotation.set(-0.055, -0.06, -0.018);
     group.current.scale.setScalar(0.84);
@@ -146,6 +148,7 @@ function SceneRig({ introStarted, exploreMode, onIntroComplete }: ExperienceCanv
       if (completionSent.current) return;
       completionSent.current = true;
       introFinished.current = true;
+      setLanded(true);
       onIntroComplete();
     };
 
@@ -353,16 +356,16 @@ function SceneRig({ introStarted, exploreMode, onIntroComplete }: ExperienceCanv
     <>
       <group ref={group}>
         <Float
-          speed={introFinished.current ? 0.42 : 0}
-          rotationIntensity={introFinished.current ? 0.014 : 0}
-          floatIntensity={introFinished.current ? 0.045 : 0}
+          speed={landed ? 0.42 : 0}
+          rotationIntensity={landed ? 0.014 : 0}
+          floatIntensity={landed ? 0.045 : 0}
         >
           <PlaceholderAircraft />
         </Float>
       </group>
 
       <OrbitControls
-        enabled={exploreMode && introFinished.current}
+        enabled={exploreMode && landed}
         enablePan={false}
         enableDamping
         dampingFactor={0.055}
