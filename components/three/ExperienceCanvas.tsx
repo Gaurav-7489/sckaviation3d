@@ -2,7 +2,7 @@
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, Float, MeshReflectorMaterial, OrbitControls } from '@react-three/drei';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
@@ -17,6 +17,8 @@ type ExperienceCanvasProps = {
   onIntroPhase: (phase: IntroPhase) => void;
   onIntroComplete: () => void;
 };
+
+type SceneRigProps = ExperienceCanvasProps & { skipIntro: boolean };
 
 type Shot = {
   position: readonly [number, number, number];
@@ -171,7 +173,7 @@ function CloudField({ state }: { state: MutableRefObject<CloudState> }) {
   );
 }
 
-function SceneRig({ introStarted, exploreMode, onIntroPhase, onIntroComplete }: ExperienceCanvasProps) {
+function SceneRig({ introStarted, exploreMode, onIntroPhase, onIntroComplete, skipIntro }: SceneRigProps) {
   const aircraftGroup = useRef<THREE.Group>(null);
   const cameraTarget = useRef(new THREE.Vector3(0, 1.4, -8));
   const scrollProgress = useRef(0);
@@ -243,7 +245,7 @@ function SceneRig({ introStarted, exploreMode, onIntroPhase, onIntroComplete }: 
       onIntroComplete();
     };
 
-    if (reducedMotion) {
+    if (reducedMotion || skipIntro) {
       cloudState.current.opacity = 0;
       setRunwayVisible(true);
       background.set('#050507');
@@ -257,7 +259,7 @@ function SceneRig({ introStarted, exploreMode, onIntroPhase, onIntroComplete }: 
       aircraft.scale.setScalar(1);
       camera.position.set(...heroShot.position);
       cameraTarget.current.set(...heroShot.target);
-      const id = window.setTimeout(finish, 120);
+      const id = window.setTimeout(finish, skipIntro ? 20 : 120);
       return () => window.clearTimeout(id);
     }
 
@@ -293,7 +295,7 @@ function SceneRig({ introStarted, exploreMode, onIntroPhase, onIntroComplete }: 
       .to(cameraTarget.current, { x: heroShot.target[0], y: heroShot.target[1], z: heroShot.target[2], duration: 1.65, ease: 'power2.inOut' }, 5.65);
 
     return () => tl.kill();
-  }, [camera, introStarted, onIntroComplete, onIntroPhase, scene, shots]);
+  }, [camera, introStarted, onIntroComplete, onIntroPhase, scene, shots, skipIntro]);
 
   useFrame((_, delta) => {
     if (!introFinished.current) {
@@ -357,26 +359,41 @@ function SceneRig({ introStarted, exploreMode, onIntroPhase, onIntroComplete }: 
 }
 
 export function ExperienceCanvas(props: ExperienceCanvasProps) {
+  const [skipIntro, setSkipIntro] = useState(false);
+  const [introDone, setIntroDone] = useState(false);
+
+  const handleComplete = useCallback(() => {
+    setIntroDone(true);
+    props.onIntroComplete();
+  }, [props.onIntroComplete]);
+
   return (
-    <div className={`canvas-shell${props.introStarted ? ' entered' : ''}${props.exploreMode ? ' explore' : ''}`} aria-hidden="true">
-      <Canvas
-        camera={{ fov: 32, near: 0.1, far: 140, position: [0, 1.8, 8.8] }}
-        dpr={[1, 1.65]}
-        gl={{ antialias: true, powerPreference: 'high-performance' }}
-      >
-        <color attach="background" args={['#f4f7f8']} />
-        <fog attach="fog" args={['#f4f7f8', 6, 32]} />
-        <ambientLight intensity={0.36} />
-        <directionalLight position={[7, 8, 8]} intensity={2.4} />
-        <directionalLight position={[-9, 2, 2]} intensity={1.05} />
-        <pointLight position={[2, 1, -4]} intensity={5} distance={18} />
-        <Suspense fallback={null}>
-          <Environment preset="city" environmentIntensity={0.5} />
-          <SceneRig {...props} />
-        </Suspense>
-      </Canvas>
-      <div className="canvas-vignette" />
-      <div className="canvas-grain" />
-    </div>
+    <>
+      <div className={`canvas-shell${props.introStarted ? ' entered' : ''}${props.exploreMode ? ' explore' : ''}`} aria-hidden="true">
+        <Canvas
+          camera={{ fov: 32, near: 0.1, far: 140, position: [0, 1.8, 8.8] }}
+          dpr={[1, 1.65]}
+          gl={{ antialias: true, powerPreference: 'high-performance' }}
+        >
+          <color attach="background" args={['#f4f7f8']} />
+          <fog attach="fog" args={['#f4f7f8', 6, 32]} />
+          <ambientLight intensity={0.36} />
+          <directionalLight position={[7, 8, 8]} intensity={2.4} />
+          <directionalLight position={[-9, 2, 2]} intensity={1.05} />
+          <pointLight position={[2, 1, -4]} intensity={5} distance={18} />
+          <Suspense fallback={null}>
+            <Environment preset="city" environmentIntensity={0.5} />
+            <SceneRig {...props} skipIntro={skipIntro} onIntroComplete={handleComplete} />
+          </Suspense>
+        </Canvas>
+        <div className="canvas-vignette" />
+        <div className="canvas-grain" />
+      </div>
+      {props.introStarted && !introDone ? (
+        <button className="intro-skip" type="button" onClick={() => setSkipIntro(true)}>
+          Skip intro <span aria-hidden="true">→</span>
+        </button>
+      ) : null}
+    </>
   );
 }
