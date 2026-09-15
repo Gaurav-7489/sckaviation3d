@@ -26,7 +26,6 @@ const directions = [
 ];
 const worldUp = new THREE.Vector3(0, 1, 0);
 
-/** Fit the entire jet to the available canvas, including portrait screens. */
 function fittedDistance(direction: THREE.Vector3, camera: THREE.PerspectiveCamera) {
   const right = new THREE.Vector3().crossVectors(worldUp, direction).normalize();
   const up = new THREE.Vector3().crossVectors(direction, right).normalize();
@@ -38,7 +37,7 @@ function fittedDistance(direction: THREE.Vector3, camera: THREE.PerspectiveCamer
       depth + Math.abs(corner.dot(right)) / tanHorizontal,
       depth + Math.abs(corner.dot(up)) / tanVertical,
     ];
-  })) * 1.13;
+  })) * 1.12;
 }
 
 type KeyboardStep = { horizontal: number; vertical: number; sequence: number };
@@ -61,7 +60,6 @@ function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps 
       const stickyTop = window.innerWidth <= 720 ? 64 : 72;
       const travel = Math.max(1, bounds.height - window.innerHeight + stickyTop);
       progress.current = THREE.MathUtils.clamp((stickyTop - bounds.top) / travel, 0, 1);
-      // No animation loop runs when this section is outside the viewport.
       if (bounds.top < window.innerHeight && bounds.bottom > 0) invalidate();
     };
     const schedule = () => {
@@ -111,20 +109,22 @@ function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps 
 
   return (
     <>
-      <hemisphereLight args={['#dae7ed', '#141c25', 2.5]} />
-      <directionalLight position={[-5, 9, 7]} intensity={5} color="#eaf1f4" />
-      <directionalLight position={[5, 4, -7]} intensity={5.5} color="#abcbdc" />
-      <directionalLight position={[-8, 1, -4]} intensity={2.6} color="#d6c5af" />
-      <directionalLight position={[2, 5, 8]} intensity={2} color="#ffffff" />
+      {/* Editorial Luxury Studio Lighting: Rich shadows, high specular rims */}
+      <hemisphereLight args={['#20262e', '#030405', 1.8]} />
+      <directionalLight position={[-8, 12, 8]} intensity={4.5} color="#ffffff" />
+      <directionalLight position={[7, 5, -8]} intensity={3.5} color="#e5c898" />
+      <directionalLight position={[-10, 2, -6]} intensity={2.0} color="#7ba6c0" />
+      <directionalLight position={[0, -6, 4]} intensity={0.9} color="#1b2126" />
       <AircraftModel />
       <OrbitControls
         enabled={exploreMode}
         enableZoom={false}
         enablePan={false}
-        enableDamping={false}
-        rotateSpeed={0.55}
-        minPolarAngle={Math.PI * 0.19}
-        maxPolarAngle={Math.PI * 0.53}
+        enableDamping={true}
+        dampingFactor={0.06}
+        rotateSpeed={0.65}
+        minPolarAngle={Math.PI * 0.20}
+        maxPolarAngle={Math.PI * 0.52}
         target={lookAt}
         onChange={() => invalidate()}
       />
@@ -168,7 +168,7 @@ export function ExperienceCanvas({ exploreMode, onReady }: ExperienceCanvasProps
       className={styles.shell}
       role="img"
       tabIndex={exploreMode && showScene ? 0 : undefined}
-      aria-label={exploreMode && showScene ? 'Private jet viewer. Drag or use the arrow keys to turn the aircraft.' : 'A complete view of a private jet. Scroll to see it from different angles.'}
+      aria-label={exploreMode && showScene ? 'Private jet interactive viewer. Drag or use the arrow keys to turn the aircraft.' : 'Black Star 3D showcase. Scroll down to inspect angles.'}
       onKeyDown={(event) => {
         if (!exploreMode || !showScene || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
         event.preventDefault();
@@ -179,9 +179,8 @@ export function ExperienceCanvas({ exploreMode, onReady }: ExperienceCanvasProps
     >
       {(!showScene || !ready) && (
         <div className={styles.fallback}>
-          {/* The full photograph stays visible when motion or WebGL is unavailable. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/plane_img.webp" alt="Private jet on the apron" width="1920" height="1080" />
+          <img src="/plane_img.webp" alt="Black Star private jet" width="1920" height="1080" />
         </div>
       )}
       {showScene && (
@@ -189,14 +188,14 @@ export function ExperienceCanvas({ exploreMode, onReady }: ExperienceCanvasProps
           <Canvas
             className={`${styles.canvas} ${exploreMode ? styles.exploring : ''}`}
             frameloop="demand"
-            camera={{ fov: 32, near: 0.1, far: 150, position: [-18, 9, 22] }}
+            camera={{ fov: 30, near: 0.1, far: 150, position: [-18, 9, 22] }}
             dpr={[1, 1.5]}
-            gl={{ antialias: true, alpha: true, powerPreference: 'default', stencil: false }}
-            fallback={<div className={styles.fallback}><img src="/plane_img.webp" alt="Private jet on the apron" /></div>}
+            gl={{ antialias: true, alpha: true, powerPreference: 'high-performance', stencil: false }}
+            fallback={<div className={styles.fallback}><img src="/plane_img.webp" alt="Black Star jet" /></div>}
             onCreated={({ gl }) => {
               gl.setClearColor(0x000000, 0);
               gl.toneMapping = THREE.ACESFilmicToneMapping;
-              gl.toneMappingExposure = 1.15;
+              gl.toneMappingExposure = 1.25;
               canvasElement.current = gl.domElement;
               gl.domElement.addEventListener('webglcontextlost', fail);
             }}
