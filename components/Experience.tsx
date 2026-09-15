@@ -14,10 +14,42 @@ const chapters = [
   { id: 'access', index: '04', label: 'ACCESS' },
 ] as const;
 
+const hotspots = [
+  {
+    id: 'paint',
+    index: '01',
+    label: 'MATTE / GLOSS',
+    title: 'BLACK AS SURFACE',
+    body: 'The production model will separate matte bodywork, gloss signature treatment and reflective trim so lighting can reveal each finish independently.',
+    x: 54,
+    y: 43,
+  },
+  {
+    id: 'identity',
+    index: '02',
+    label: 'IDENTITY',
+    title: 'OE-LSC',
+    body: 'Registration and custom graphic details become inspectable design elements rather than decoration baked into a generic aircraft texture.',
+    x: 67,
+    y: 48,
+  },
+  {
+    id: 'engine',
+    index: '03',
+    label: 'ENGINE',
+    title: 'POWER, CONTROLLED',
+    body: 'The final asset will preserve the G450 engine silhouette while using restrained reflections and edge light instead of exaggerated product-render effects.',
+    x: 73,
+    y: 39,
+  },
+] as const;
+
 export function Experience() {
   const root = useRef<HTMLDivElement>(null);
   const [entered, setEntered] = useState(false);
   const [activeChapter, setActiveChapter] = useState('hero');
+  const [exploreMode, setExploreMode] = useState(false);
+  const [activeHotspot, setActiveHotspot] = useState<(typeof hotspots)[number]>(hotspots[0]);
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -53,10 +85,22 @@ export function Experience() {
 
   useEffect(() => {
     document.documentElement.dataset.experienceEntered = entered ? 'true' : 'false';
+    document.body.style.overflow = exploreMode ? 'hidden' : '';
+
     return () => {
       delete document.documentElement.dataset.experienceEntered;
+      document.body.style.overflow = '';
     };
-  }, [entered]);
+  }, [entered, exploreMode]);
+
+  useEffect(() => {
+    if (!exploreMode) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setExploreMode(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [exploreMode]);
 
   const active = chapters.find((chapter) => chapter.id === activeChapter) ?? chapters[0];
 
@@ -64,7 +108,7 @@ export function Experience() {
     <main className="experience" ref={root}>
       <Preloader onEnter={() => setEntered(true)} />
 
-      <nav className={`nav${entered ? ' visible' : ''}`} aria-label="Primary">
+      <nav className={`nav${entered ? ' visible' : ''}${exploreMode ? ' muted' : ''}`} aria-label="Primary">
         <a className="brand" href="#hero">SCK AVIATION</a>
         <div className="nav-links">
           <a href="#aircraft">Aircraft</a>
@@ -73,15 +117,15 @@ export function Experience() {
         </div>
       </nav>
 
-      <div className={`chapter-rail${entered ? ' visible' : ''}`} aria-hidden="true">
+      <div className={`chapter-rail${entered ? ' visible' : ''}${exploreMode ? ' muted' : ''}`} aria-hidden="true">
         <span>{active.index}</span>
         <span className="chapter-rail-line" />
         <span>{active.label}</span>
       </div>
 
-      <ExperienceCanvas entered={entered} />
+      <ExperienceCanvas entered={entered} exploreMode={exploreMode} />
 
-      <div className="scroll-layer">
+      <div className={`scroll-layer${exploreMode ? ' frozen' : ''}`}>
         <section className="chapter chapter-hero" id="hero" data-camera="hero">
           <div className="chapter-inner" data-reveal>
             <p className="eyebrow">SCK Aviation / Vienna</p>
@@ -105,7 +149,9 @@ export function Experience() {
             <p className="eyebrow">02 / OE-LSC</p>
             <h2>Black Star.</h2>
             <p className="copy">A controlled inspection chapter for exterior treatment, registration, signature details and future hotspots.</p>
-            <button className="ghost-button" type="button">Explore Aircraft <span>↗</span></button>
+            <button className="ghost-button" type="button" onClick={() => setExploreMode(true)}>
+              Explore Aircraft <span>↗</span>
+            </button>
           </div>
         </section>
 
@@ -125,6 +171,56 @@ export function Experience() {
           </div>
         </section>
       </div>
+
+      <section className={`explore-overlay${exploreMode ? ' open' : ''}`} aria-hidden={!exploreMode} aria-label="Explore OE-LSC">
+        <div className="explore-topbar">
+          <div>
+            <span className="explore-meta">OE-LSC / BLACK STAR</span>
+            <strong>INTERACTIVE OBJECT</strong>
+          </div>
+          <button type="button" className="explore-close" onClick={() => setExploreMode(false)}>
+            EXIT <span>×</span>
+          </button>
+        </div>
+
+        <div className="explore-instruction" aria-hidden="true">
+          <span>DRAG TO ORBIT</span>
+          <span>SCROLL TO ZOOM</span>
+        </div>
+
+        <div className="hotspot-layer" aria-label="Aircraft detail hotspots">
+          {hotspots.map((hotspot) => (
+            <button
+              key={hotspot.id}
+              type="button"
+              className={`hotspot${activeHotspot.id === hotspot.id ? ' active' : ''}`}
+              style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
+              onClick={() => setActiveHotspot(hotspot)}
+              aria-label={`${hotspot.index} ${hotspot.label}`}
+            >
+              <span>{hotspot.index}</span>
+            </button>
+          ))}
+        </div>
+
+        <aside className="detail-panel" aria-live="polite">
+          <p className="eyebrow">{activeHotspot.index} / {activeHotspot.label}</p>
+          <h3>{activeHotspot.title}</h3>
+          <p>{activeHotspot.body}</p>
+          <div className="detail-index">
+            {hotspots.map((hotspot) => (
+              <button
+                key={hotspot.id}
+                type="button"
+                className={activeHotspot.id === hotspot.id ? 'active' : ''}
+                onClick={() => setActiveHotspot(hotspot)}
+              >
+                {hotspot.index}
+              </button>
+            ))}
+          </div>
+        </aside>
+      </section>
     </main>
   );
 }
