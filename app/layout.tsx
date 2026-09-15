@@ -3,6 +3,7 @@ import 'lenis/dist/lenis.css';
 import './globals.css';
 import './intro-media.css';
 import './pdr.css';
+import './gallery.css';
 import './intro-continuity.css';
 
 export const metadata: Metadata = {
