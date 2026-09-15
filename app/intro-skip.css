@@ -1,0 +1,28 @@
+.intro-skip {
+  position: fixed;
+  right: clamp(18px, 3vw, 40px);
+  bottom: clamp(18px, 3vw, 34px);
+  z-index: 70;
+  min-width: 132px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 1px solid rgba(245,245,243,.42);
+  border-radius: 0;
+  background: rgba(5,5,7,.24);
+  color: #f5f5f3;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  font-size: 8px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.intro-skip:hover, .intro-skip:focus-visible { border-bottom-color: #f5f5f3; background: rgba(5,5,7,.42); }
+.intro-skip span { transition: transform .25s ease; }
+.intro-skip:hover span { transform: translateX(3px); }
+@media (max-width: 720px) { .intro-skip { right: 18px; bottom: 18px; min-width: 120px; } }
+@media (prefers-reduced-motion: reduce) { .intro-skip span { transition: none; } }

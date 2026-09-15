@@ -1,0 +1,16 @@
+.site-menu-button,
+.hotspot,
+.detail-index button,
+.aircraft-gallery-toolbar button,
+.explore-close { min-width: 44px; min-height: 44px; }
+
+@media (max-width: 720px) {
+  .hotspot { width: 44px; height: 44px; margin: -22px 0 0 -22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+  *, *::before, *::after { scroll-behavior: auto !important; }
+  .scroll-layer [data-reveal] { opacity: 1 !important; transform: none !important; }
+  .canvas-grain { display: none; }
+}
