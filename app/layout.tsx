@@ -4,6 +4,7 @@ import './pdr.css';
 import './gallery.css';
 import './a11y.css';
 import './experience.css';
+import './editorial-polish.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://sckaviation.com'),

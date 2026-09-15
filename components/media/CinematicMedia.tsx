@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { MediaAsset } from '@/lib/media';
-import '@/app/editorial-polish.css';
 
 type Props = {
   asset?: MediaAsset;
