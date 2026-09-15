@@ -57,7 +57,7 @@ export function CinematicMedia({ asset, className = '', label, eyebrow, eager = 
             loop={!effectiveControls}
             playsInline
             controls={effectiveControls}
-            poster={poster}
+            poster={poster || '/plane_img.webp'}
             preload={eager ? 'auto' : 'metadata'}
             style={{ objectPosition }}
           />
