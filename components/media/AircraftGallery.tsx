@@ -1,21 +1,61 @@
 'use client';
 
-import { useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MediaAsset } from '@/lib/media';
 import { CinematicMedia } from './CinematicMedia';
 
 export function AircraftGallery({ assets }: { assets: Array<{ asset?: MediaAsset; label: string }> }) {
   const track = useRef<HTMLDivElement>(null);
+  const [paused, setPaused] = useState(false);
+  const [inView, setInView] = useState(false);
 
-  function move(direction: -1 | 1) {
+  const move = useCallback((direction: -1 | 1) => {
     const element = track.current;
     if (!element) return;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    element.scrollBy({ left: direction * element.clientWidth * 0.85, behavior: reduced ? 'auto' : 'smooth' });
-  }
+    const card = element.querySelector<HTMLElement>('.cinematic-media');
+    const gap = Number.parseFloat(window.getComputedStyle(element).columnGap || '0');
+    const distance = card ? card.getBoundingClientRect().width + gap : element.clientWidth * 0.85;
+
+    element.scrollBy({ left: direction * distance, behavior: reduced ? 'auto' : 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    const element = track.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.25 });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const element = track.current;
+    if (!element || paused || !inView) return;
+    if (window.innerWidth <= 720) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const timer = window.setInterval(() => {
+      const nearEnd = element.scrollLeft + element.clientWidth >= element.scrollWidth - 40;
+      if (nearEnd) {
+        element.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        move(1);
+      }
+    }, 4200);
+
+    return () => window.clearInterval(timer);
+  }, [inView, move, paused]);
 
   return (
-    <div className="aircraft-gallery" aria-label="OE-LSC media gallery">
+    <div
+      className="aircraft-gallery"
+      aria-label="OE-LSC media gallery"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={() => setPaused(false)}
+    >
       <div className="aircraft-gallery-toolbar">
         <span>Explore the aircraft</span>
         <div>
