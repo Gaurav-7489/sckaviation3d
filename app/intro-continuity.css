@@ -1,3 +1,4 @@
+html { scroll-behavior: auto; }
 .cloud-wash { transition: opacity 1.25s cubic-bezier(.22,.61,.36,1), visibility 0s linear 1.25s; }
 .cloud-wash.clouds { visibility: visible; opacity: .9; animation: sck-cloud-drift 4.8s ease-in-out infinite alternate; transition-delay: 0s; }
 .cloud-wash.approach { visibility: visible; opacity: .34; animation: sck-cloud-drift 4.8s ease-in-out infinite alternate; transition-delay: 0s; }
