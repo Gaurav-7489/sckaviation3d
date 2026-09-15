@@ -48,10 +48,11 @@ export default function AircraftPage() {
       </PageSection>
 
       <PageSection index="04 / PROOF" title="Award, Quietly">
-        <p>The blueprint identifies the International Yacht &amp; Aviation Awards 2024 Private Jet Design award as verified research support. It appears as proof inside the story, not as a trophy wall.</p>
+        <p>The blueprint identifies the International Yacht &amp; Aviation Awards 2024 Private Jet Design award as research-supported proof. It appears inside the story, not as a trophy wall.</p>
         <div className="page-media-pair">
           <CinematicMedia asset={asset('SCK-img-award.webp')} label="International Yacht & Aviation Awards / 2024" eyebrow="PROOF" />
         </div>
+        <p><a className="text-link" href="https://thedesignawards.co.uk/sck-aviation-gulfstream-g450/" target="_blank" rel="noreferrer">Source / Design et al <span>↗</span></a></p>
       </PageSection>
     </EditorialShell>
   );
