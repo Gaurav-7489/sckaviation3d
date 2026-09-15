@@ -42,8 +42,14 @@ export default function AircraftPage() {
         </PageSection>
         <PageSection index="03 / RECOGNITION" title="Award-winning design.">
           <p>Black Star received the Private Jet Design award at the International Yacht &amp; Aviation Awards 2024.</p>
-          <div className="page-award-media"><CinematicMedia asset={asset('SCK-img-award.webp')} label="International Yacht & Aviation Awards, 2024" /></div>
-          <p><a className="text-link" href="https://thedesignawards.co.uk/sck-aviation-gulfstream-g450/" target="_blank" rel="noreferrer">Discover the award <span aria-hidden="true">↗</span></a></p>
+          <div className="aircraft-recognition-layout">
+            <div className="page-award-media"><CinematicMedia asset={asset('SCK-img-award.webp')} label="International Yacht & Aviation Awards, 2024" /></div>
+            <div className="aircraft-recognition-proof">
+              <span className="aircraft-recognition-meta">WINNER / 2024</span>
+              <strong className="aircraft-recognition-title">Private Jet Interior &amp; Exterior Design</strong>
+              <p><a className="text-link" href="https://thedesignawards.co.uk/sck-aviation-gulfstream-g450/" target="_blank" rel="noreferrer">Discover the award <span aria-hidden="true">↗</span></a></p>
+            </div>
+          </div>
         </PageSection>
       </EditorialShell>
     </div>
