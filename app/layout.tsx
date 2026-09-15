@@ -6,6 +6,7 @@ import './a11y.css';
 import './experience.css';
 import './editorial-polish.css';
 import './home-final.css';
+import './flight-scroll.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://sckaviation.com'),

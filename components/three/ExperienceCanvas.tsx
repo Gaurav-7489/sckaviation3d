@@ -25,6 +25,8 @@ const directions = [
   new THREE.Vector3(1.25, 0.77, 1.35).normalize(),
 ];
 const worldUp = new THREE.Vector3(0, 1, 0);
+const CAMERA_SCROLL_DAMPING = 2.2;
+const CAMERA_SETTLE_EPSILON = 0.00035;
 
 function fittedDistance(direction: THREE.Vector3, camera: THREE.PerspectiveCamera) {
   const right = new THREE.Vector3().crossVectors(worldUp, direction).normalize();
@@ -45,7 +47,8 @@ type KeyboardStep = { horizontal: number; vertical: number; sequence: number };
 function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps & { keyboardStep: KeyboardStep }) {
   const { camera: rawCamera, invalidate, size } = useThree();
   const camera = rawCamera as THREE.PerspectiveCamera;
-  const progress = useRef(0);
+  const targetProgress = useRef(0);
+  const smoothedProgress = useRef(0);
   const direction = useRef(directions[0].clone());
   const readySent = useRef(false);
   const handledKey = useRef(0);
@@ -59,7 +62,7 @@ function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps 
       const bounds = story.getBoundingClientRect();
       const stickyTop = window.innerWidth <= 720 ? 64 : 72;
       const travel = Math.max(1, bounds.height - window.innerHeight + stickyTop);
-      progress.current = THREE.MathUtils.clamp((stickyTop - bounds.top) / travel, 0, 1);
+      targetProgress.current = THREE.MathUtils.clamp((stickyTop - bounds.top) / travel, 0, 1);
       if (bounds.top < window.innerHeight && bounds.bottom > 0) invalidate();
     };
     const schedule = () => {
@@ -92,15 +95,29 @@ function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps 
     invalidate();
   }, [camera, exploreMode, invalidate, keyboardStep]);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (exploreMode) {
       direction.current.copy(camera.position).sub(lookAt).normalize();
+      smoothedProgress.current = targetProgress.current;
     } else {
-      const scaled = progress.current * (directions.length - 1);
+      const safeDelta = Math.max(1 / 120, Math.min(delta, 1 / 30));
+      const nextProgress = THREE.MathUtils.damp(
+        smoothedProgress.current,
+        targetProgress.current,
+        CAMERA_SCROLL_DAMPING,
+        safeDelta,
+      );
+      const remaining = Math.abs(targetProgress.current - nextProgress);
+      smoothedProgress.current = remaining < CAMERA_SETTLE_EPSILON ? targetProgress.current : nextProgress;
+
+      const scaled = smoothedProgress.current * (directions.length - 1);
       const index = Math.min(Math.floor(scaled), directions.length - 2);
       const amount = THREE.MathUtils.smoothstep(scaled - index, 0, 1);
       direction.current.lerpVectors(directions[index], directions[index + 1], amount).normalize();
+
+      if (remaining >= CAMERA_SETTLE_EPSILON) invalidate();
     }
+
     camera.position.copy(direction.current).multiplyScalar(fittedDistance(direction.current, camera)).add(lookAt);
     camera.lookAt(lookAt);
     if (!readySent.current) {
@@ -123,7 +140,7 @@ function SceneRig({ exploreMode, onReady, keyboardStep }: ExperienceCanvasProps 
         enablePan={false}
         enableDamping={true}
         dampingFactor={0.06}
-        rotateSpeed={0.65}
+        rotateSpeed={0.5}
         minPolarAngle={Math.PI * 0.20}
         maxPolarAngle={Math.PI * 0.52}
         target={lookAt}
