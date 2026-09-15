@@ -13,6 +13,8 @@ export type ExperienceCanvasProps = {
 };
 
 type KeyboardStep = { horizontal: number; vertical: number; sequence: number };
+type Vec3 = [number, number, number];
+type SoftwareFace = { points: Vec3[]; tone: number };
 
 type SceneRigProps = ExperienceCanvasProps & {
   keyboardStep: KeyboardStep;
@@ -90,8 +92,18 @@ class AircraftErrorBoundary extends Component<{ children: ReactNode }, { failed:
   render() { return this.state.failed ? <BackupAircraft3D /> : this.props.children; }
 }
 
+class WebGLErrorBoundary extends Component<
+  { children: ReactNode; onFailure: () => void },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch() { this.props.onFailure(); }
+  render() { return this.state.failed ? null : this.props.children; }
+}
+
 function SceneRig({ exploreMode, keyboardStep, reducedMotion }: SceneRigProps) {
-  const { camera: rawCamera, size } = useThree();
+  const { camera: rawCamera } = useThree();
   const camera = rawCamera as THREE.PerspectiveCamera;
   const targetProgress = useRef(0);
   const smoothedProgress = useRef(0);
@@ -185,10 +197,259 @@ function SceneRig({ exploreMode, keyboardStep, reducedMotion }: SceneRigProps) {
   );
 }
 
+function createSoftwareAircraftFaces(): SoftwareFace[] {
+  const faces: SoftwareFace[] = [];
+  const stations: Array<[number, number]> = [
+    [-5.9, 0.08], [-5.45, 0.34], [-4.75, 0.58], [-3.6, 0.72],
+    [1.9, 0.72], [3.45, 0.6], [4.7, 0.38], [5.85, 0.07],
+  ];
+  const segments = 14;
+  const rings = stations.map(([x, radius]) => Array.from({ length: segments }, (_, index) => {
+    const angle = index / segments * Math.PI * 2;
+    return [x, Math.cos(angle) * radius * 0.86, Math.sin(angle) * radius] as Vec3;
+  }));
+
+  for (let ring = 0; ring < rings.length - 1; ring += 1) {
+    for (let segment = 0; segment < segments; segment += 1) {
+      const next = (segment + 1) % segments;
+      faces.push({
+        points: [rings[ring][segment], rings[ring][next], rings[ring + 1][next], rings[ring + 1][segment]],
+        tone: 40,
+      });
+    }
+  }
+
+  for (const side of [-1, 1]) {
+    const s = side as -1 | 1;
+    faces.push({
+      points: [
+        [-1.6, -0.26, 0.28 * s], [-0.3, -0.22, 1.7 * s],
+        [3.2, 0.03, 5.9 * s], [3.52, 0.2, 6.08 * s],
+        [1.45, 0.02, 4.0 * s],
+      ],
+      tone: 34,
+    });
+    faces.push({
+      points: [
+        [3.85, 1.15, 0.2 * s], [4.55, 1.22, 1.0 * s],
+        [5.82, 1.36, 2.15 * s], [5.35, 1.38, 2.3 * s],
+        [4.1, 1.26, 1.05 * s],
+      ],
+      tone: 38,
+    });
+
+    const engineX = [1.5, 3.5];
+    const engineSegments = 10;
+    const engineRings = engineX.map((x) => Array.from({ length: engineSegments }, (_, index) => {
+      const angle = index / engineSegments * Math.PI * 2;
+      return [x, 0.3 + Math.cos(angle) * 0.37, 1.04 * s + Math.sin(angle) * 0.37] as Vec3;
+    }));
+    for (let segment = 0; segment < engineSegments; segment += 1) {
+      const next = (segment + 1) % engineSegments;
+      faces.push({
+        points: [engineRings[0][segment], engineRings[0][next], engineRings[1][next], engineRings[1][segment]],
+        tone: 48,
+      });
+    }
+  }
+
+  faces.push({
+    points: [[3.35, 0.38, -0.05], [4.15, 2.0, -0.05], [5.55, 2.05, -0.05], [5.55, 0.35, -0.05]],
+    tone: 43,
+  });
+  faces.push({
+    points: [[3.35, 0.38, 0.05], [5.55, 0.35, 0.05], [5.55, 2.05, 0.05], [4.15, 2.0, 0.05]],
+    tone: 43,
+  });
+
+  return faces;
+}
+
+const SOFTWARE_FACES = createSoftwareAircraftFaces();
+
+function rotateSoftwarePoint(point: Vec3, yaw: number, pitch: number): Vec3 {
+  const cy = Math.cos(yaw);
+  const sy = Math.sin(yaw);
+  const cp = Math.cos(pitch);
+  const sp = Math.sin(pitch);
+  const x1 = point[0] * cy + point[2] * sy;
+  const z1 = -point[0] * sy + point[2] * cy;
+  const y2 = point[1] * cp - z1 * sp;
+  const z2 = point[1] * sp + z1 * cp;
+  return [x1, y2, z2];
+}
+
+function projectSoftwarePoint(point: Vec3, width: number, height: number) {
+  const cameraDistance = 18;
+  const focal = Math.min(width, height) * 1.58;
+  const depth = Math.max(7, cameraDistance - point[2]);
+  const scale = focal / depth;
+  return {
+    x: width * 0.5 + point[0] * scale,
+    y: height * 0.5 - point[1] * scale + height * 0.01,
+    scale,
+  };
+}
+
+function SoftwareAircraftCanvas({ onReady, reducedMotion }: { onReady?: () => void; reducedMotion: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const readySent = useRef(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    let width = 1;
+    let height = 1;
+    let frame = 0;
+    let targetProgress = 0;
+    let smoothProgress = 0;
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      width = Math.max(1, rect.width);
+      height = Math.max(1, rect.height);
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    const updateScroll = () => {
+      const story = document.getElementById('flight-story');
+      if (!story) return;
+      const bounds = story.getBoundingClientRect();
+      const stickyTop = window.innerWidth <= 720 ? 64 : 72;
+      const travel = Math.max(1, bounds.height - window.innerHeight + stickyTop);
+      targetProgress = Math.min(1, Math.max(0, (stickyTop - bounds.top) / travel));
+    };
+
+    const draw = () => {
+      smoothProgress += (targetProgress - smoothProgress) * (reducedMotion ? 1 : 0.075);
+      const progress = reducedMotion ? 0.5 : smoothProgress;
+      const yaw = -0.52 + progress * 1.04;
+      const pitch = 0.12 + Math.sin(progress * Math.PI) * 0.055;
+
+      context.clearRect(0, 0, width, height);
+
+      const glow = context.createRadialGradient(width * 0.54, height * 0.52, 0, width * 0.54, height * 0.52, Math.min(width, height) * 0.52);
+      glow.addColorStop(0, 'rgba(63, 74, 84, 0.16)');
+      glow.addColorStop(0.55, 'rgba(16, 20, 24, 0.07)');
+      glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      context.fillStyle = glow;
+      context.fillRect(0, 0, width, height);
+
+      const transformed = SOFTWARE_FACES.map((face) => {
+        const points = face.points.map((point) => rotateSoftwarePoint(point, yaw, pitch));
+        const averageZ = points.reduce((sum, point) => sum + point[2], 0) / points.length;
+        return { face, points, averageZ };
+      }).sort((a, b) => a.averageZ - b.averageZ);
+
+      for (const item of transformed) {
+        const points2d = item.points.map((point) => projectSoftwarePoint(point, width, height));
+        const a = item.points[0];
+        const b = item.points[1];
+        const c = item.points[2];
+        const ab: Vec3 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+        const ac: Vec3 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+        const nx = ab[1] * ac[2] - ab[2] * ac[1];
+        const ny = ab[2] * ac[0] - ab[0] * ac[2];
+        const nz = ab[0] * ac[1] - ab[1] * ac[0];
+        const length = Math.max(0.0001, Math.hypot(nx, ny, nz));
+        const light = Math.abs((nx * -0.25 + ny * 0.72 + nz * 0.64) / length);
+        const value = Math.round(Math.min(118, item.face.tone + light * 66));
+
+        context.beginPath();
+        context.moveTo(points2d[0].x, points2d[0].y);
+        for (let index = 1; index < points2d.length; index += 1) {
+          context.lineTo(points2d[index].x, points2d[index].y);
+        }
+        context.closePath();
+        context.fillStyle = `rgb(${value}, ${Math.min(128, value + 5)}, ${Math.min(136, value + 10)})`;
+        context.fill();
+        context.strokeStyle = 'rgba(205, 215, 224, 0.08)';
+        context.lineWidth = 0.7;
+        context.stroke();
+      }
+
+      const visibleSide = yaw >= 0 ? -0.68 : 0.68;
+      context.fillStyle = 'rgba(190, 153, 102, 0.82)';
+      for (let index = 0; index < 9; index += 1) {
+        const point = rotateSoftwarePoint([-3.45 + index * 0.57, 0.2, visibleSide], yaw, pitch);
+        const projected = projectSoftwarePoint(point, width, height);
+        const radius = Math.max(1.4, Math.min(3.2, projected.scale * 0.055));
+        context.beginPath();
+        context.ellipse(projected.x, projected.y, radius * 1.35, radius, 0, 0, Math.PI * 2);
+        context.fill();
+      }
+
+      context.strokeStyle = 'rgba(238, 242, 246, 0.24)';
+      context.lineWidth = 1;
+      const nose = projectSoftwarePoint(rotateSoftwarePoint([-5.65, 0.35, 0], yaw, pitch), width, height);
+      const tail = projectSoftwarePoint(rotateSoftwarePoint([5.45, 1.1, 0], yaw, pitch), width, height);
+      context.beginPath();
+      context.moveTo(nose.x, nose.y);
+      context.lineTo(tail.x, tail.y);
+      context.stroke();
+
+      frame = window.requestAnimationFrame(draw);
+    };
+
+    const onScroll = () => updateScroll();
+    const onResize = () => {
+      resize();
+      updateScroll();
+    };
+
+    resize();
+    updateScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize, { passive: true });
+    if (!readySent.current) {
+      readySent.current = true;
+      onReady?.();
+    }
+    draw();
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [onReady, reducedMotion]);
+
+  return <canvas ref={canvasRef} className={styles.softwareCanvas} aria-hidden="true" />;
+}
+
+function canCreateWebGLContext() {
+  try {
+    const canvas = document.createElement('canvas');
+    const attributes: WebGLContextAttributes = {
+      alpha: true,
+      antialias: false,
+      depth: true,
+      stencil: false,
+      failIfMajorPerformanceCaveat: false,
+      preserveDrawingBuffer: false,
+      powerPreference: 'default',
+    };
+    const context = canvas.getContext('webgl', attributes) as WebGLRenderingContext | null;
+    if (!context) return false;
+    context.getExtension('WEBGL_lose_context')?.loseContext();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function ExperienceCanvas({ exploreMode, onReady }: ExperienceCanvasProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null);
   const [keyboardStep, setKeyboardStep] = useState<KeyboardStep>({ horizontal: 0, vertical: 0, sequence: 0 });
   const notifyReady = useCallback(() => onReady?.(), [onReady]);
+  const handleWebGLFailure = useCallback(() => setWebglAvailable(false), []);
 
   useEffect(() => {
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -198,44 +459,56 @@ export function ExperienceCanvas({ exploreMode, onReady }: ExperienceCanvasProps
     return () => motion.removeEventListener('change', updatePreference);
   }, []);
 
+  useEffect(() => {
+    setWebglAvailable(canCreateWebGLContext());
+  }, []);
+
+  const useSoftwareRenderer = webglAvailable !== true;
+
   return (
     <div
       className={styles.shell}
       role="img"
-      tabIndex={exploreMode ? 0 : undefined}
-      aria-label={exploreMode ? 'Private jet interactive viewer. Drag or use the arrow keys to turn the aircraft.' : 'Black Star 3D showcase. Scroll down to inspect angles.'}
+      tabIndex={exploreMode && webglAvailable === true ? 0 : undefined}
+      aria-label={webglAvailable === false
+        ? 'Black Star aircraft showcase using a software-rendered 3D fallback because WebGL is unavailable.'
+        : exploreMode
+          ? 'Private jet interactive viewer. Drag or use the arrow keys to turn the aircraft.'
+          : 'Black Star 3D showcase. Scroll down to inspect angles.'}
       onKeyDown={(event) => {
-        if (!exploreMode || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+        if (!exploreMode || webglAvailable !== true || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
         event.preventDefault();
         const horizontal = event.key === 'ArrowLeft' ? -0.12 : event.key === 'ArrowRight' ? 0.12 : 0;
         const vertical = event.key === 'ArrowUp' ? -0.1 : event.key === 'ArrowDown' ? 0.1 : 0;
         setKeyboardStep((previous) => ({ horizontal, vertical, sequence: previous.sequence + 1 }));
       }}
     >
-      <Canvas
-        className={`${styles.canvas} ${exploreMode ? styles.exploring : ''}`}
-        frameloop="always"
-        camera={{ fov: 31, near: 0.1, far: 150, position: [-18, 9, 22] }}
-        dpr={[1, 1.35]}
-        gl={{ antialias: true, alpha: true, stencil: false }}
-        fallback={
-          <div className={styles.fallback}>
-            <img src="/plane_img.webp" alt="Black Star jet" />
-          </div>
-        }
-        onCreated={({ gl }) => {
-          gl.setClearColor(0x000000, 0);
-          gl.toneMapping = THREE.ACESFilmicToneMapping;
-          gl.toneMappingExposure = 1.38;
-          notifyReady();
-        }}
-      >
-        <SceneRig
-          exploreMode={exploreMode}
-          keyboardStep={keyboardStep}
-          reducedMotion={reducedMotion}
-        />
-      </Canvas>
+      {useSoftwareRenderer ? (
+        <SoftwareAircraftCanvas onReady={notifyReady} reducedMotion={reducedMotion} />
+      ) : (
+        <WebGLErrorBoundary onFailure={handleWebGLFailure}>
+          <Canvas
+            className={`${styles.canvas} ${exploreMode ? styles.exploring : ''}`}
+            frameloop="always"
+            camera={{ fov: 31, near: 0.1, far: 150, position: [-18, 9, 22] }}
+            dpr={[1, 1.35]}
+            gl={{ antialias: true, alpha: true, stencil: false, powerPreference: 'default' }}
+            onCreated={({ gl }) => {
+              gl.setClearColor(0x000000, 0);
+              gl.toneMapping = THREE.ACESFilmicToneMapping;
+              gl.toneMappingExposure = 1.38;
+              gl.domElement.addEventListener('webglcontextlost', handleWebGLFailure, { once: true });
+              notifyReady();
+            }}
+          >
+            <SceneRig
+              exploreMode={exploreMode}
+              keyboardStep={keyboardStep}
+              reducedMotion={reducedMotion}
+            />
+          </Canvas>
+        </WebGLErrorBoundary>
+      )}
     </div>
   );
 }
