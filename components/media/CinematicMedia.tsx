@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { MediaAsset } from '@/lib/media';
+import '@/app/editorial-polish.css';
 
 type Props = {
   asset?: MediaAsset;
@@ -14,52 +15,87 @@ type Props = {
   poster?: string;
 };
 
+const films: Record<string, { src: string; poster: string; aspect: number }> = {
+  'vid-charter-feature-v1.mp4': { src: '/videos/charter.mp4', poster: '/images/charter-poster.webp', aspect: 9 / 16 },
+  'vid-mi-opt-v1.mp4': { src: '/videos/atelier.mp4', poster: '/images/atelier-poster.webp', aspect: 1920 / 1012 },
+  'charter.mp4': { src: '/videos/charter.mp4', poster: '/images/charter-poster.webp', aspect: 9 / 16 },
+  'atelier.mp4': { src: '/videos/atelier.mp4', poster: '/images/atelier-poster.webp', aspect: 1920 / 1012 },
+};
+
 export function CinematicMedia({ asset, className = '', label, eyebrow, eager = false, objectPosition = 'center', controls = false, poster }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const userPaused = useRef(false);
   const [playing, setPlaying] = useState(false);
-  const [mobile, setMobile] = useState(false);
+  const [aspect, setAspect] = useState<number>();
+  const [playbackError, setPlaybackError] = useState(false);
+  const film = asset ? films[asset.filename] : undefined;
+  const videoLabel = label || asset?.label || 'Aircraft film';
 
   useEffect(() => {
-    const query = window.matchMedia('(max-width: 720px)');
-    const sync = () => setMobile(query.matches);
-    sync();
-    query.addEventListener('change', sync);
-    return () => query.removeEventListener('change', sync);
-  }, []);
-
-  const effectiveControls = controls || mobile;
-
-  useEffect(() => {
-    if (!asset || asset.kind !== 'video' || effectiveControls || !videoRef.current) return;
     const video = videoRef.current;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && entry.intersectionRatio > 0.55) {
-        void video.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
-      } else {
+    if (asset?.kind !== 'video' || !video) return;
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let inView = false;
+    let disposed = false;
+    const syncPlayback = () => {
+      if (!inView || document.hidden || motion.matches) {
         video.pause();
-        setPlaying(false);
+      } else if (!controls && !userPaused.current) {
+        void video.play().then(() => {
+          if (disposed || document.hidden || !inView) video.pause();
+        }).catch(() => undefined);
       }
-    }, { threshold: [0, 0.55, 0.8] });
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting && entry.intersectionRatio >= 0.35;
+      syncPlayback();
+    }, { threshold: [0, 0.35, 0.7] });
     observer.observe(video);
-    return () => observer.disconnect();
-  }, [asset, effectiveControls]);
+    document.addEventListener('visibilitychange', syncPlayback);
+    motion.addEventListener('change', syncPlayback);
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', syncPlayback);
+      motion.removeEventListener('change', syncPlayback);
+      video.pause();
+    };
+  }, [asset?.kind, asset?.src, controls]);
+
+  function togglePlayback() {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      userPaused.current = false;
+      void video.play().catch(() => setPlaybackError(true));
+    } else {
+      userPaused.current = true;
+      video.pause();
+    }
+  }
 
   if (!asset) return null;
+  const mediaStyle = { objectPosition, objectFit: 'contain' as const, transform: 'none', filter: 'none' };
 
   return (
-    <figure className={`cinematic-media ${className}`.trim()}>
-      <div className="cinematic-media-frame">
+    <figure className={`cinematic-media ${asset.kind === 'video' ? 'cinematic-film' : 'cinematic-still'} ${className}`.trim()}>
+      <div className="cinematic-media-frame" style={{ aspectRatio: aspect || film?.aspect || undefined }}>
         {asset.kind === 'video' ? (
           <video
             ref={videoRef}
-            src={asset.src}
-            muted={!effectiveControls}
-            loop={!effectiveControls}
+            src={film?.src || asset.src}
+            muted={!controls}
+            loop={!controls}
             playsInline
-            controls={effectiveControls}
-            poster={poster || '/plane_img.webp'}
-            preload={eager ? 'auto' : 'metadata'}
-            style={{ objectPosition }}
+            controls={controls}
+            poster={poster || film?.poster}
+            preload={eager ? 'metadata' : 'none'}
+            aria-label={videoLabel}
+            style={mediaStyle}
+            onLoadedMetadata={(event) => setAspect(event.currentTarget.videoWidth / event.currentTarget.videoHeight)}
+            onPlay={() => { setPlaying(true); setPlaybackError(false); }}
+            onPause={() => setPlaying(false)}
+            onError={() => setPlaybackError(true)}
           />
         ) : (
           <img
@@ -68,14 +104,20 @@ export function CinematicMedia({ asset, className = '', label, eyebrow, eager = 
             loading={eager ? 'eager' : 'lazy'}
             fetchPriority={eager ? 'high' : 'auto'}
             decoding="async"
-            style={{ objectPosition }}
+            style={mediaStyle}
+            onLoad={(event) => setAspect(event.currentTarget.naturalWidth / event.currentTarget.naturalHeight)}
           />
         )}
-        {asset.kind === 'video' && !effectiveControls ? <span className="media-state">{playing ? 'MOTION' : 'READY'}</span> : null}
+        {asset.kind === 'video' && !controls ? (
+          <button type="button" className="media-playback" onClick={togglePlayback} aria-label={`${playing ? 'Pause' : 'Play'} ${videoLabel}`}>
+            <span aria-hidden="true">{playing ? 'Ⅱ' : '▶'}</span> {playing ? 'Pause film' : 'Play film'}
+          </button>
+        ) : null}
+        {playbackError ? <p className="media-error" role="status">The film could not play. <a href={film?.src || asset.src}>Open the film</a></p> : null}
       </div>
       {(label || eyebrow) ? (
         <figcaption>
-          <span>{eyebrow || (asset.kind === 'video' ? 'MOTION' : 'STILL')}</span>
+          {eyebrow ? <span>{eyebrow}</span> : null}
           <strong>{label || asset.label}</strong>
         </figcaption>
       ) : null}

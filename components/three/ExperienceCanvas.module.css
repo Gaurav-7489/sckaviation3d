@@ -1,0 +1,53 @@
+.shell {
+  position: absolute;
+  inset: 0 0 0 34%;
+  isolation: isolate;
+}
+
+.shell:focus-visible {
+  outline: 1px solid #b5a18a;
+  outline-offset: -18px;
+  border-radius: 6px;
+}
+
+.canvas {
+  position: absolute !important;
+  inset: 0;
+  touch-action: pan-y;
+  cursor: default;
+}
+
+.exploring {
+  cursor: grab;
+  touch-action: none;
+}
+
+.exploring:active {
+  cursor: grabbing;
+}
+
+.fallback {
+  position: absolute;
+  inset: 14% 4%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fallback img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: saturate(0.58);
+  border-radius: 4px;
+}
+
+@media (max-width: 720px) {
+  .shell {
+    inset: 0 0 40%;
+  }
+  .fallback {
+    inset: 12% 5% 5%;
+  }
+}

@@ -1,25 +1,32 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import { CinematicMedia } from '@/components/media/CinematicMedia';
 import { EditorialShell, PageSection } from '@/components/ui/EditorialShell';
+import { getPublicMedia } from '@/lib/media';
 
 export const metadata: Metadata = {
-  title: 'About / Sandra',
-  description: 'Founder-led context for SCK Aviation and the creative worldview behind the aircraft and atelier.',
+  title: 'About SCK Aviation',
+  description: 'Meet the creative vision behind SCK Aviation, founded by Sandra Corinna Kinzl-Schuurman.',
 };
 
 export default function AboutPage() {
+  const media = getPublicMedia();
   return (
     <EditorialShell
-      eyebrow="ABOUT / SANDRA"
-      title={<>A Creative<br />House.</>}
-      intro="The founder layer is treated editorially: worldview first, biography second. The blueprint identifies Sandra Corinna Kinzl-Schuurman as the founder context behind SCK Aviation."
+      eyebrow="ABOUT SCK AVIATION"
+      title={<>A singular<br />vision.</>}
+      intro="Founded by Sandra Corinna Kinzl-Schuurman, SCK Aviation brings a personal point of view to aircraft design, travel and film."
+      image={{ src: '/images/sandra-corinna-kinzl.webp', alt: 'Sandra Corinna Kinzl beside the entrance to OE-LSC' }}
       nextHref="/access"
-      nextLabel="Connect Selectively"
+      nextLabel="Get in touch"
     >
-      <PageSection index="01 / WORLDVIEW" title="One Point Of View">
-        <p>SCK is framed as an aircraft transformation and lifestyle aviation house rather than a conventional charter brand. The site keeps founder context connected to design, projects and execution proof.</p>
+      <PageSection index="01 / OUR POINT OF VIEW" title="Made to stand apart.">
+        <p>Black Star expresses a simple belief: an aircraft can be as individual as the person behind it. From its matte-black exterior to its smallest cabin detail, OE-LSC carries that belief through.</p>
+        <div className="page-wide-media"><CinematicMedia asset={media.find((item) => item.filename === 'inplane_seats.webp')} label="Inside OE-LSC" /></div>
       </PageSection>
-      <PageSection index="02 / GOVERNANCE" title="Approved, Not Invented">
-        <p>Founder quotes, detailed biography and personal references remain approval-sensitive content. The page is structurally ready for verified copy and an approved portrait without inventing missing material.</p>
+      <PageSection index="02 / OUR WORLD" title="Beyond the journey.">
+        <p>Our world includes selected private travel, productions and special projects. It begins with a shared idea and a conversation.</p>
+        <Link href="/projects" className="text-link">Explore our projects <span aria-hidden="true">→</span></Link>
       </PageSection>
     </EditorialShell>
   );

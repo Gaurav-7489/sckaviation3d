@@ -1,28 +1,36 @@
 import type { Metadata } from 'next';
 import { AccessForm } from '@/components/ui/AccessForm';
-import { EditorialShell, PageSection } from '@/components/ui/EditorialShell';
+import { EditorialShell } from '@/components/ui/EditorialShell';
 
 export const metadata: Metadata = {
-  title: 'Request Access',
-  description: 'Qualified inquiry for aircraft transformation, selective charter, production and collaboration.',
+  title: 'Make an Enquiry',
+  description: 'Talk to SCK Aviation about aircraft design, private charter, film production, or a new collaboration.',
 };
 
 export default function AccessPage() {
   return (
-    <EditorialShell
-      eyebrow="ACCESS / INQUIRY"
-      title={<>Selectively.</>}
-      intro="Conversion should feel like entering a selective relationship, not submitting a generic quote request. Only project-relevant context is requested."
-      nextHref="/aircraft"
-      nextLabel="Explore Black Star"
-    >
-      <PageSection index="01 / REQUEST" title="Tell Us The Intent">
-        <p>Choose transformation, selective charter, production or collaboration. Operational fields such as passenger count or budget are intentionally excluded until the project type actually requires them.</p>
-        <AccessForm />
-      </PageSection>
-      <PageSection index="02 / ROUTING" title="Built For Approval">
-        <p>The form endpoint validates input and is ready to route to an approved CRM or secure webhook. Until SCK confirms that destination and final privacy language, the live route returns a clear recoverable state rather than silently sending data somewhere unapproved.</p>
-      </PageSection>
-    </EditorialShell>
+    <div className="enquiry-page">
+      <EditorialShell
+        eyebrow="CONTACT SCK AVIATION"
+        title={<>Let’s talk.</>}
+        intro="A private journey. A new aircraft interior. A scene only this aircraft could make. Tell us what you have in mind."
+        nextHref="/aircraft"
+        nextLabel="Explore the aircraft"
+      >
+        <section className="enquiry-layout" aria-labelledby="enquiry-heading">
+          <div className="enquiry-intro">
+            <p className="eyebrow">START A CONVERSATION</p>
+            <h2 id="enquiry-heading">Your next<br />chapter.</h2>
+            <p>Share your plans with our team. Complete the form to prepare an email, or contact us directly below.</p>
+            <div className="enquiry-contact">
+              <span>Contact us directly</span>
+              <a href="mailto:sck@sckaviation.com">sck@sckaviation.com <span aria-hidden="true">↗</span></a>
+              <p>Based in Vienna.<br />Working wherever your project takes us.</p>
+            </div>
+          </div>
+          <AccessForm />
+        </section>
+      </EditorialShell>
+    </div>
   );
 }

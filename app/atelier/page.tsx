@@ -4,54 +4,41 @@ import { EditorialShell, PageSection } from '@/components/ui/EditorialShell';
 import { getPublicMedia } from '@/lib/media';
 
 export const metadata: Metadata = {
-  title: 'Atelier / Transformation',
-  description: 'The SCK Aviation transformation story: process, execution and proof arranged as an editorial timeline.',
+  title: 'The Atelier — Black Star’s Transformation',
+  description: 'Discover the design choices and craftsmanship behind the transformation of the SCK Aviation Gulfstream G450.',
 };
 
 const steps = [
-  ['01', 'Arrival', 'The object enters the story before the finish does.'],
-  ['02', 'Strip', 'Remove what no longer belongs; expose the system underneath.'],
-  ['03', 'Structure', 'Complexity becomes visible before it becomes controlled.'],
-  ['04', 'Paint', 'Surface, preparation and alignment determine the final read.'],
-  ['05', 'Manufacture', 'Material choices and custom details resolve into one language.'],
-  ['06', 'Completion', 'The finished aircraft becomes proof of the process rather than a separate claim.'],
+  ['01', 'The idea', 'A single vision for the exterior, cabin and every detail in between.'],
+  ['02', 'The finish', 'Matte and gloss create depth across the black exterior.'],
+  ['03', 'The cabin', 'Seating, marble and metal bring texture and comfort into the same space.'],
+  ['04', 'Black Star', 'The finished Gulfstream G450, with the SCK signature throughout.'],
 ] as const;
 
 export default function AtelierPage() {
   const media = getPublicMedia();
   const asset = (name: string) => media.find((item) => item.filename === name);
-
   return (
     <EditorialShell
-      eyebrow="ATELIER / TRANSFORMATION"
-      title={<>Mission<br />Impossible.</>}
-      intro="The blueprint treats process as trust: arrival, removal, structure, paint, manufacture and completion become a chaptered narrative instead of hidden back-of-house work."
+      eyebrow="THE ATELIER"
+      title={<>An idea.<br />Made real.</>}
+      intro="Black Star began with a clear vision. Its transformation brought the aircraft, cabin and materials into one carefully considered whole."
+      image={{ src: '/images/sck-galley.webp', alt: 'Black Portoro marble and metal finishes in the OE-LSC galley' }}
       nextHref="/projects"
-      nextLabel="View Projects"
+      nextLabel="Explore our projects"
     >
-      <PageSection index="01 / PROCESS" title="Proof, In Sequence">
-        <p>Every step is designed to support media, credits and source approval without turning the page into a technical report.</p>
-        <div className="numbered-timeline">
-          {steps.map(([number, title, body]) => (
-            <article key={number}>
-              <span>{number}</span><h3>{title}</h3><p>{body}</p>
-            </article>
-          ))}
-        </div>
+      <PageSection index="01 / TRANSFORMATION" title="From vision to detail.">
+        <div className="numbered-timeline">{steps.map(([number, title, body]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{body}</p></article>)}</div>
       </PageSection>
-
-      <PageSection index="02 / MOTION" title="Process On Film">
-        <p>The available production/process footage is used as one cinematic chapter with lazy playback, not as decorative background noise.</p>
-        <div className="page-wide-media">
-          <CinematicMedia asset={asset('vid-mi-opt-v1.mp4')} label="Transformation / production film" eyebrow="PROCESS / MOTION" controls />
-        </div>
+      <PageSection index="02 / THE FILM" title="Made for the screen.">
+        <p>Watch Black Star in the world of Mission: Impossible 8.</p>
+        <div className="page-wide-media"><CinematicMedia asset={asset('vid-mi-opt-v1.mp4')} label="Black Star / Mission: Impossible" eyebrow="WATCH THE FILM" controls /></div>
       </PageSection>
-
-      <PageSection index="03 / CABIN" title="Material Becomes Method">
-        <p>Interior media is positioned as evidence of decisions and finish quality. Captions remain editable so approved credits and sourcing can be added later.</p>
+      <PageSection index="03 / CRAFT" title="A closer connection.">
+        <p>The feel of the fabric. The shape of a seat. The light across the marble. Design comes to life in the details you see and touch.</p>
         <div className="page-media-pair">
-          <CinematicMedia asset={asset('colse_view_seat.webp')} label="Cabin detail" eyebrow="DETAIL / 01" />
-          <CinematicMedia asset={asset('inplane_seats.webp')} label="Cabin system" eyebrow="DETAIL / 02" />
+          <CinematicMedia asset={asset('colse_view_seat.webp')} label="Tailored upholstery" eyebrow="THE SEATING" />
+          <CinematicMedia asset={asset('sck-cabin-detail.webp')} label="The view through the cabin" eyebrow="THE CABIN" />
         </div>
       </PageSection>
     </EditorialShell>

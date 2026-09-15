@@ -1,43 +1,35 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { CinematicMedia } from '@/components/media/CinematicMedia';
 import { EditorialShell, PageSection } from '@/components/ui/EditorialShell';
 import { getPublicMedia } from '@/lib/media';
 
 export const metadata: Metadata = {
-  title: 'Projects / Productions',
-  description: 'Selective charter, productions and special-project positioning from SCK Aviation.',
+  title: 'Projects & Private Travel',
+  description: 'SCK Aviation for film productions, special projects and selected private travel.',
 };
 
 export default function ProjectsPage() {
   const media = getPublicMedia();
   const asset = (name: string) => media.find((item) => item.filename === name);
-
   return (
     <EditorialShell
-      eyebrow="PROJECTS / PRODUCTIONS"
-      title={<>Beyond<br />Aviation.</>}
-      intro="The SCK world extends into productions, selective charter and cross-category special projects while keeping the aircraft and real media at the center."
-      nextHref="/design-philosophy"
-      nextLabel="View Design"
+      eyebrow="PROJECTS & PRIVATE TRAVEL"
+      title={<>A wider<br />world.</>}
+      intro="From the cinema screen to selected private journeys, Black Star brings its own presence to every setting."
+      image={{ src: '/images/sck-aircraft-flight.webp', alt: 'SCK Aviation’s Black Star flying above the clouds' }}
+      nextHref="/access"
+      nextLabel="Discuss your plans"
     >
-      <PageSection index="01 / SELECTIVE" title="Access, Not Volume">
-        <p>Selective charter is framed as part of the attitude rather than as a fleet marketplace. The available charter film carries the scene while the interface stays quiet.</p>
-        <div className="page-wide-media">
-          <CinematicMedia asset={asset('vid-charter-feature-v1.mp4')} label="Selective charter / project film" eyebrow="SELECTIVE / MOTION" controls />
-        </div>
+      <PageSection index="01 / PRIVATE TRAVEL" title="A journey of your own.">
+        <p>Our selective charter offering brings Black Star closer. Share your route, dates and plans with our team.</p>
+        <div className="page-wide-media page-portrait-film"><CinematicMedia asset={asset('vid-charter-feature-v1.mp4')} label="Travel with SCK Aviation" eyebrow="WATCH THE FILM" controls /></div>
+        <Link href="/access?type=charter" className="text-link">Enquire about a journey <span aria-hidden="true">→</span></Link>
       </PageSection>
-
-      <PageSection index="02 / PRODUCTIONS" title="A Wider Frame">
-        <p>The page architecture is ready for approved production, film, fashion, automotive and private-project cases. Each case can carry media, credits, source status and a contextual next action.</p>
-        <div className="material-library">
-          <article className="material-card"><span>01 / CASE TYPE</span><h3>Productions</h3></article>
-          <article className="material-card"><span>02 / CASE TYPE</span><h3>Automotive</h3></article>
-          <article className="material-card"><span>03 / CASE TYPE</span><h3>Special Projects</h3></article>
-        </div>
-      </PageSection>
-
-      <PageSection index="03 / ROUTING" title="No Dead Ends">
-        <p>Project stories route directly to qualified access rather than generic contact. Credits and production references should only be published once SCK approves the exact wording and usage.</p>
+      <PageSection index="02 / PRODUCTIONS" title="A cinematic presence.">
+        <p>Featured in Mission: Impossible 8, OE-LSC brings an unmistakable silhouette to the screen. We welcome conversations about film productions and special projects.</p>
+        <div className="page-wide-media"><CinematicMedia asset={asset('sck-aircraft-hangar.webp')} label="OE-LSC in the hangar" /></div>
+        <Link href="/access?type=production" className="text-link">Tell us about your project <span aria-hidden="true">→</span></Link>
       </PageSection>
     </EditorialShell>
   );

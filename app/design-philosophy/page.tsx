@@ -5,40 +5,35 @@ import { getPublicMedia } from '@/lib/media';
 
 export const metadata: Metadata = {
   title: 'Design Philosophy',
-  description: 'The SCK Aviation visual signature: black, material, shape, typography and sourcing as one design system.',
+  description: 'Explore the materials, finishes and individual details that shape the SCK Aviation signature.',
 };
 
 export default function DesignPage() {
   const media = getPublicMedia();
   const asset = (name: string) => media.find((item) => item.filename === name);
-
   return (
     <EditorialShell
       eyebrow="DESIGN PHILOSOPHY"
-      title={<>Material<br />First.</>}
-      intro="The researched signature is not a palette alone. Black, finish, textile, metal, typography and alignment are treated as a connected system."
+      title={<>Feel the<br />difference.</>}
+      intro="Black is the starting point. Texture, light and the character of each material give it depth."
+      image={{ src: '/images/sck-portoro-marble.webp', alt: 'Light tracing the natural veins of Black Star’s Portoro marble' }}
       nextHref="/journal"
-      nextLabel="Open Journal"
+      nextLabel="Explore the stories"
     >
-      <PageSection index="01 / COLOR" title="Black Has Depth">
-        <p>Deep black is the canvas, matte black is the physical reference, off-white carries primary text, and chrome/silver appear as controlled highlights rather than decoration.</p>
-        <div className="material-library">
-          <article className="material-card"><span>#050507</span><h3>Deep Black</h3></article>
-          <article className="material-card"><span>#0A0A0A</span><h3>Matte Black</h3></article>
-          <article className="material-card"><span>#E8E8E8</span><h3>Chrome</h3></article>
-        </div>
+      <PageSection index="01 / THE FINISH" title="Many shades of black.">
+        <p>A matte surface absorbs the light. Gloss catches it. Together, they give the exterior its changing character.</p>
+        <div className="page-wide-media"><CinematicMedia asset={asset('sck-aircraft-hangar.webp')} label="Light across the matte-black exterior" /></div>
       </PageSection>
-
-      <PageSection index="02 / MATERIAL" title="Evidence Before Claim">
-        <p>Material modules are designed to support macro media and concise sourcing/detail stories. No generic beige-luxury filler and no hover-only information.</p>
+      <PageSection index="02 / THE MATERIALS" title="Chosen to be felt.">
+        <p>Soft fabric, cool metal and naturally patterned marble. The cabin brings different sensations into a calm, connected space.</p>
         <div className="page-media-pair">
-          <CinematicMedia asset={asset('colse_view_seat.webp')} label="Material detail" eyebrow="TEXTURE" />
-          <CinematicMedia asset={asset('seat_full view.webp')} label="Seat form" eyebrow="FORM" />
+          <CinematicMedia asset={asset('colse_view_seat.webp')} label="The texture of the seating" eyebrow="SOFT FABRIC" />
+          <CinematicMedia asset={asset('sck-galley.webp')} label="Portoro marble and metal" eyebrow="NATURAL CONTRAST" />
         </div>
       </PageSection>
-
-      <PageSection index="03 / SHAPE" title="Tense. Cut. Carved.">
-        <p>Sharp geometry, negative space and disciplined alignment replace rounded-card language. Motion remains restrained and only exists to intensify or explain the object.</p>
+      <PageSection index="03 / THE WHOLE" title="One clear idea.">
+        <p>The shape of a seat, the pattern of the carpet and the finish of the galley share the same point of view. Each detail feels at home in the whole.</p>
+        <div className="page-wide-media"><CinematicMedia asset={asset('inplane_seats.webp')} label="The complete Black Star cabin" /></div>
       </PageSection>
     </EditorialShell>
   );

@@ -10,7 +10,7 @@ export function SiteFooter() {
         <Link href="/projects">Projects</Link>
         <Link href="/design-philosophy">Design</Link>
         <Link href="/about">About</Link>
-        <Link href="/access">Request Access</Link>
+        <Link href="/access">Make an enquiry</Link>
       </div>
       <div className="site-footer-meta">
         <span>VIENNA</span>

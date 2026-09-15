@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { SiteFooter } from './SiteFooter';
 import { SiteNav } from './SiteNav';
+import '@/app/editorial-polish.css';
 
 export function EditorialShell({
   eyebrow,
@@ -10,6 +11,7 @@ export function EditorialShell({
   children,
   nextHref,
   nextLabel,
+  image,
 }: {
   eyebrow: string;
   title: ReactNode;
@@ -17,14 +19,16 @@ export function EditorialShell({
   children: ReactNode;
   nextHref: string;
   nextLabel: string;
+  image?: { src: string; alt: string };
 }) {
   return (
-    <main className="editorial-page">
+    <main id="main-content" className="editorial-page">
       <SiteNav visible />
-      <header className="page-hero">
+      <header className={`page-hero ${image ? 'page-hero-with-image' : ''}`}>
         <p className="eyebrow">{eyebrow}</p>
         <h1>{title}</h1>
         <p className="page-hero-copy">{intro}</p>
+        {image ? <div className="page-hero-image"><img src={image.src} alt={image.alt} fetchPriority="high" decoding="async" /></div> : null}
       </header>
       {children}
       <div className="page-next">
