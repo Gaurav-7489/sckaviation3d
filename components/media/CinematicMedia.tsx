@@ -11,14 +11,26 @@ type Props = {
   eager?: boolean;
   objectPosition?: string;
   controls?: boolean;
+  poster?: string;
 };
 
-export function CinematicMedia({ asset, className = '', label, eyebrow, eager = false, objectPosition = 'center', controls = false }: Props) {
+export function CinematicMedia({ asset, className = '', label, eyebrow, eager = false, objectPosition = 'center', controls = false, poster }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [mobile, setMobile] = useState(false);
 
   useEffect(() => {
-    if (!asset || asset.kind !== 'video' || controls || !videoRef.current) return;
+    const query = window.matchMedia('(max-width: 720px)');
+    const sync = () => setMobile(query.matches);
+    sync();
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
+
+  const effectiveControls = controls || mobile;
+
+  useEffect(() => {
+    if (!asset || asset.kind !== 'video' || effectiveControls || !videoRef.current) return;
     const video = videoRef.current;
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && entry.intersectionRatio > 0.55) {
@@ -30,7 +42,7 @@ export function CinematicMedia({ asset, className = '', label, eyebrow, eager = 
     }, { threshold: [0, 0.55, 0.8] });
     observer.observe(video);
     return () => observer.disconnect();
-  }, [asset, controls]);
+  }, [asset, effectiveControls]);
 
   if (!asset) return null;
 
@@ -41,10 +53,11 @@ export function CinematicMedia({ asset, className = '', label, eyebrow, eager = 
           <video
             ref={videoRef}
             src={asset.src}
-            muted={!controls}
-            loop={!controls}
+            muted={!effectiveControls}
+            loop={!effectiveControls}
             playsInline
-            controls={controls}
+            controls={effectiveControls}
+            poster={poster}
             preload={eager ? 'auto' : 'metadata'}
             style={{ objectPosition }}
           />
@@ -58,7 +71,7 @@ export function CinematicMedia({ asset, className = '', label, eyebrow, eager = 
             style={{ objectPosition }}
           />
         )}
-        {asset.kind === 'video' && !controls ? <span className="media-state">{playing ? 'MOTION' : 'READY'}</span> : null}
+        {asset.kind === 'video' && !effectiveControls ? <span className="media-state">{playing ? 'MOTION' : 'READY'}</span> : null}
       </div>
       {(label || eyebrow) ? (
         <figcaption>
